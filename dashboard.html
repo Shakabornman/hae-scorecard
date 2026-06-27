@@ -476,14 +476,14 @@ function openPanel(ix) {
 
   // Section pills
   const sectionsThisWeek  = d.sections || [];
-  const sectionsPrevWeek  = {};  // TODO: load from weeklyRollups prev week if needed
 
   for (const sec of sectionsThisWeek) {
     const letter = ragLetter(sec.rating);
     const p = pilCol(letter);
+    const secLabel = sec.label || sec.id || '';
     h += `
       <div class="srow">
-        <span>${sec.letter} ${sec.label}</span>
+        <span>${sec.letter} ${secLabel}</span>
         <span class="pill" style="background:${p[0]};color:${p[1]}">${letter}</span>
         <span class="pill" style="background:#F1EFE8;color:#888">—</span>
       </div>`;
