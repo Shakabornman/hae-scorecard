@@ -797,17 +797,32 @@ window.setNote = function(secId, val) {
 
 // ── SUBMIT ────────────────────────────────────────────────────────────────
 window.submitForm = async function() {
-  const btn = document.getElementById('btn-submit');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-
   const dateVal = document.getElementById('shift-date').value;
   if (!dateVal) {
     showToast('Select a date first', 'error');
-    btn.disabled = false;
-    btn.textContent = 'Submit shift';
     return;
   }
+
+  // Count unanswered rating items
+  const activeSecs = SECTIONS.filter(s => !(s.nightOnly && currentShift !== 'night'));
+  let unanswered = 0;
+  for (const sec of activeSecs) {
+    for (const item of sec.items) {
+      if (item.type === 'rating' && !answers[`${sec.id}.${item.id}`]) unanswered++;
+    }
+  }
+
+  // Warning gate — confirm if items unanswered
+  if (unanswered > 0) {
+    const msg = unanswered === 1
+      ? `1 item has not been answered. Submit anyway?`
+      : `${unanswered} items have not been answered. Submit anyway?`;
+    if (!confirm(msg)) return;
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
 
   // Build sections document
   const sectionsData = {};
