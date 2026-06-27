@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital at Ekhaya — Weekly Scorecard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#EEF1F4;color:#1b1b1b;padding:18px;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.1)}
+
+/* HEADER */
+.top{background:#1F3A5F;padding:20px 26px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px}
+.top h1{color:#fff;font-size:20px;font-weight:700;letter-spacing:.2px}
+.top .sub{color:#C8A24B;font-size:12px;margin-top:3px}
+.status{text-align:right}
+.status .lbl{color:#9FB3CC;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.status .val{font-size:23px;font-weight:700}
+
+/* WEEK SELECTOR */
+.week-bar{background:#f8f7f5;border-bottom:1px solid #e8e6e0;padding:10px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.week-bar label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.week-bar select{font-size:13px;padding:5px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1b1b1b;cursor:pointer}
+.week-bar .live-badge{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:10px;background:#EAF3DE;color:#3B6D11;border:1px solid #CFE3B5}
+.week-bar .prev-btn{font-size:12px;color:#4A7FA5;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+
+/* BODY */
+.body{padding:22px 26px}
+.lbl{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+
+/* TREND CHART */
+.chartbox{position:relative;height:185px;margin-bottom:26px}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:26px}
+.card{border-radius:11px;padding:14px;cursor:pointer;transition:transform .08s,box-shadow .08s}
+.card:hover{transform:translateY(-2px);box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.card .nm{font-size:14px;font-weight:700}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
+.card .sc{font-size:26px;font-weight:700}
+.card .ar{font-size:13px;font-weight:700}
+.card .meta{font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+.card .tap{font-size:9px;margin-top:7px;color:#9aa;text-transform:uppercase;letter-spacing:.5px}
+
+/* NOTES */
+.notes{border:1px solid #eee;border-radius:11px;overflow:hidden}
+.nrow{display:flex;padding:9px 14px;border-bottom:1px solid #f0f0f0}
+.nrow:last-child{border-bottom:none}
+.nrow .nd{width:120px;flex-shrink:0;font-size:12px;font-weight:700}
+.nrow .nt{font-size:12px;color:#555}
+
+/* LOADING */
+.loading{padding:60px 26px;text-align:center;color:#888;font-size:14px}
+.spinner{width:28px;height:28px;border:2px solid #e0e0e0;border-top-color:#1F3A5F;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* OVERLAY PANEL */
+.ov{position:fixed;inset:0;background:rgba(20,30,45,.55);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;z-index:50}
+.ov.show{display:flex}
+.panel{background:#fff;border-radius:14px;max-width:680px;width:100%;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.ptop{background:#1F3A5F;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.ptop h3{color:#fff;font-size:17px;font-weight:700}
+.ptop .x{color:#9FB3CC;font-size:22px;cursor:pointer;line-height:1;border:none;background:none}
+.pbody{padding:18px 22px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.cmpcol{border:1px solid #eee;border-radius:10px;padding:12px 14px}
+.cmpcol h4{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:8px}
+.cmpcol .big{font-size:22px;font-weight:700}
+.cmpcol .sub{font-size:11px;color:#666;margin-top:3px}
+.seclbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin:14px 0 8px}
+.srow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #f4f4f4;font-size:13px}
+.pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;min-width:26px;text-align:center}
+
+/* FOOTER */
+.foot{padding:12px 26px;border-top:1px solid #eee;color:#999;font-size:11px;text-align:center}
+.foot a{color:#9FB3CC;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="top">
+    <div>
+      <h1>Hospital at Ekhaya</h1>
+      <div class="sub">Weekly Management Scorecard · Week ending <span id="we">—</span></div>
+    </div>
+    <div class="status">
+      <div class="lbl">Hospital Status</div>
+      <div class="val" id="hstatus">—</div>
+    </div>
+  </div>
+
+  <!-- WEEK SELECTOR -->
+  <div class="week-bar">
+    <label>View week:</label>
+    <select id="week-select" onchange="loadWeek(this.value)"></select>
+    <span class="live-badge" id="live-badge" style="display:none">● Live</span>
+    <button class="prev-btn" id="prev-btn" onclick="loadPrevWeek()" style="display:none">← Previous week</button>
+  </div>
+
+  <!-- BODY -->
+  <div class="body" id="body">
+    <div class="loading"><div class="spinner"></div>Loading scorecard data…</div>
+  </div>
+
+  <!-- OVERLAY DRILL-DOWN -->
+  <div class="ov" id="ov">
+    <div class="panel">
+      <div class="ptop"><h3 id="pttl"></h3><button class="x" id="pclose">✕</button></div>
+      <div class="pbody" id="pbody"></div>
+    </div>
+  </div>
+
+  <div class="foot">For the People, by the People &nbsp;·&nbsp; Fix the Basics to Move the Needle &nbsp;·&nbsp; <a href="https://shakabornman.github.io/hae-scorecard/">hae-scorecard</a></div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBla6UBluNcWVKPSU8U30IuTSubLb7R2Kc",
+  authDomain:        "hae-vuma-92fca.firebaseapp.com",
+  projectId:         "hae-vuma-92fca",
+  storageBucket:     "hae-vuma-92fca.firebasestorage.app",
+  messagingSenderId: "1052424261313",
+  appId:             "1:1052424261313:web:a4bebe68d6f9ba14fa0e40"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } else {
+    await initDashboard();
+  }
+});
+
+// ── COLOUR PALETTE (exact from original boardroom.gs) ─────────────────────
+function pal(r) {
+  return r === 'RED'    ? ['#FCEBEB','#F2C9C9','#A32D2D','#501313','#791F1F']
+       : r === 'AMBER'  ? ['#FAEEDA','#EDD9B4','#BA7517','#412402','#633806']
+       : r === 'GREEN'  ? ['#EAF3DE','#CFE3B5','#3B6D11','#173404','#27500A']
+                        : ['#F1EFE8','#D9D6CC','#5F5E5A','#2C2C2A','#555'];
+}
+
+function pilCol(letter) {
+  return letter === 'G' ? ['#EAF3DE','#3B6D11']
+       : letter === 'A' ? ['#FAEEDA','#BA7517']
+       : letter === 'R' ? ['#FCEBEB','#A32D2D']
+                        : ['#F1EFE8','#888'];
+}
+
+function cap(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : '—'; }
+
+function arrow(t) {
+  return t === '▲' ? ['▲','#3B6D11']
+       : t === '▼' ? ['▼','#A32D2D']
+                   : ['▬','#999'];
+}
+
+function ragLetter(rag) {
+  return rag === 'GREEN' ? 'G' : rag === 'AMBER' ? 'A' : rag === 'RED' ? 'R' : '—';
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let availableWeeks = [];
+let currentWeek    = null;
+let trendChart     = null;
+let currentDepts   = [];
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function initDashboard() {
+  // Load available weeks from hospitalWeeklySummary
+  const snap = await getDocs(collection(db, 'hospitalWeeklySummary'));
+  availableWeeks = snap.docs
+    .map(d => d.id)
+    .sort()
+    .reverse();  // most recent first
+
+  // Determine current live week
+  const now = new Date();
+  const day = now.getDay();
+  const daysToThu = (4 - day + 7) % 7;
+  const thu = new Date(now);
+  thu.setDate(now.getDate() + daysToThu);
+  const liveWeek = thu.toISOString().split('T')[0];
+
+  // Populate week selector
+  const sel = document.getElementById('week-select');
+  sel.innerHTML = '';
+
+  // Always include live week first (even if no data yet)
+  const liveLabel = weekLabel(liveWeek) + ' (current)';
+  sel.innerHTML += `<option value="${liveWeek}">${liveLabel}</option>`;
+
+  for (const wk of availableWeeks) {
+    if (wk === liveWeek) continue;
+    sel.innerHTML += `<option value="${wk}">${weekLabel(wk)}</option>`;
+  }
+
+  currentWeek = sel.value;
+  document.getElementById('prev-btn').style.display = 'inline';
+
+  await loadWeek(currentWeek);
+}
+
+// ── WEEK LABEL ────────────────────────────────────────────────────────────
+function weekLabel(weekEndingStr) {
+  const thu = new Date(weekEndingStr + 'T12:00:00Z');
+  const fri = new Date(thu);
+  fri.setUTCDate(thu.getUTCDate() - 6);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fDay = fri.getUTCDate(), fMon = months[fri.getUTCMonth()];
+  const tDay = thu.getUTCDate(), tMon = months[thu.getUTCMonth()];
+  const year = thu.getUTCFullYear();
+  return fMon === tMon
+    ? `${fDay} – ${tDay} ${tMon} ${year}`
+    : `${fDay} ${fMon} – ${tDay} ${tMon} ${year}`;
+}
+
+// ── LOAD WEEK ─────────────────────────────────────────────────────────────
+window.loadWeek = async function(weekEndingStr) {
+  currentWeek = weekEndingStr;
+  document.getElementById('we').textContent = weekLabel(weekEndingStr);
+  document.getElementById('body').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+
+  // Is this the live week?
+  const now = new Date();
+  const day = now.getDay();
+  const daysToThu = (4 - day + 7) % 7;
+  const thu = new Date(now);
+  thu.setDate(now.getDate() + daysToThu);
+  const liveWeek = thu.toISOString().split('T')[0];
+  const isLive = weekEndingStr === liveWeek;
+  document.getElementById('live-badge').style.display = isLive ? 'inline' : 'none';
+
+  // Load summary for selected week
+  const summaryDoc = await getDoc(doc(db, 'hospitalWeeklySummary', weekEndingStr));
+  let summary = null;
+  if (summaryDoc.exists()) summary = summaryDoc.data();
+
+  // Load dept detail from weeklyRollups
+  let deptDetails = {};
+  const deptSnap = await getDocs(
+    collection(db, 'weeklyRollups', weekEndingStr, 'departments')
+  );
+  deptSnap.docs.forEach(d => { deptDetails[d.id] = d.data(); });
+
+  // Load previous week's summary for trend arrows and drill-down
+  const prevWeek = getPrevWeek(weekEndingStr);
+  let prevSummary = null;
+  const prevDoc = await getDoc(doc(db, 'hospitalWeeklySummary', prevWeek));
+  if (prevDoc.exists()) prevSummary = prevDoc.data();
+
+  // Load 6-week trend data
+  const trendWeeks = getLast6Weeks(weekEndingStr);
+  const trendData  = await loadTrendData(trendWeeks);
+
+  renderDashboard(summary, deptDetails, prevSummary, trendWeeks, trendData);
+}
+
+window.loadPrevWeek = function() {
+  const prev = getPrevWeek(currentWeek);
+  document.getElementById('week-select').value = prev;
+  loadWeek(prev);
+}
+
+function getPrevWeek(weekEndingStr) {
+  const thu = new Date(weekEndingStr + 'T12:00:00Z');
+  thu.setUTCDate(thu.getUTCDate() - 7);
+  return thu.toISOString().split('T')[0];
+}
+
+function getLast6Weeks(weekEndingStr) {
+  const weeks = [];
+  let cursor = getPrevWeek(weekEndingStr);
+  for (let i = 0; i < 6; i++) {
+    weeks.unshift(cursor);
+    cursor = getPrevWeek(cursor);
+  }
+  return weeks;
+}
+
+async function loadTrendData(weeks) {
+  const results = {};
+  await Promise.all(weeks.map(async wk => {
+    const d = await getDoc(doc(db, 'hospitalWeeklySummary', wk));
+    if (d.exists()) results[wk] = d.data();
+  }));
+  return results;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderDashboard(summary, deptDetails, prevSummary, trendWeeks, trendData) {
+  const DEPT_ORDER = ['billing','caseManagement','finance','supportServices','security','marketing','nursing'];
+  const DEPT_LABELS = {
+    billing:'Billing', caseManagement:'Case Management', finance:'Finance',
+    supportServices:'Support Services', security:'Security', marketing:'Marketing', nursing:'Nursing'
+  };
+
+  // Hospital status
+  const hospRAG   = summary?.overallRating || 'PENDING';
+  const hospScore = summary?.overallScore   || '';
+  const hs = document.getElementById('hstatus');
+  hs.textContent = cap(hospRAG) + (hospScore !== '' ? ` · ${hospScore}` : '');
+  hs.style.color = hospRAG === 'RED' ? '#F09595' : hospRAG === 'AMBER' ? '#FAC775' : hospRAG === 'GREEN' ? '#C0DD97' : '#9FB3CC';
+
+  // Build dept array sorted worst-first
+  const rank = { RED:0, AMBER:1, GREEN:2, PENDING:3 };
+  const depts = DEPT_ORDER
+    .map(id => {
+      const d   = deptDetails[id] || {};
+      const pre = prevSummary?.departments?.[id] || {};
+      const curScore = d.score ?? null;
+      const preScore = pre.score ?? null;
+      let trend = '▬';
+      if (curScore !== null && preScore !== null) {
+        trend = curScore > preScore ? '▲' : curScore < preScore ? '▼' : '▬';
+      }
+      return {
+        id, label: DEPT_LABELS[id],
+        rating: d.rating || 'PENDING',
+        score: curScore,
+        scorePrev: preScore,
+        trend,
+        topIssue: d.topIssue || '',
+        complianceLabel: d.complianceLabel || '',
+        complianceFlag: d.complianceFlag || false,
+        keyFigure: d.keyFigure ?? null,
+        keyFigurePrev: pre.keyFigure ?? null,
+        naCount: d.naCount || 0,
+        greenGatePassed: d.greenGatePassed !== false,
+        sections: d.sections || [],
+        ratingPrev: pre.rating || '',
+        compliancePrev: pre.complianceLabel || '',
+      };
+    })
+    .sort((a, b) => {
+      const ra = rank[a.rating] ?? 3, rb = rank[b.rating] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return (a.score ?? 5) - (b.score ?? 5);
+    });
+
+  currentDepts = depts;
+
+  // Trend chart data
+  const hospitalTrend = trendWeeks.map(wk => trendData[wk]?.overallScore ?? null);
+  const worstDept     = depts[0];
+  const worstTrend    = trendWeeks.map(wk => trendData[wk]?.departments?.[worstDept?.id]?.score ?? null);
+
+  // Render body
+  document.getElementById('body').innerHTML = `
+    <div class="lbl">Six-week trend — hospital vs most pressured department</div>
+    <div class="chartbox"><canvas id="trend"></canvas></div>
+    <div class="lbl">Departments — most pressured first</div>
+    <div class="cards" id="cards"></div>
+    <div class="lbl">Notes &amp; issues this week</div>
+    <div class="notes" id="notes"></div>
+  `;
+
+  // Cards
+  const cardsEl = document.getElementById('cards');
+  depts.forEach((d, ix) => {
+    const c = pal(d.rating);
+    const a = arrow(d.trend);
+    const meta = [d.rating.toLowerCase(), d.complianceLabel, d.keyFigure !== null ? String(d.keyFigure) : '']
+      .filter(Boolean).join(' · ');
+    cardsEl.innerHTML += `
+      <div class="card" data-ix="${ix}" style="background:${c[0]};border:1px solid ${c[1]}">
+        <div class="nm" style="color:${c[3]}">${d.label}</div>
+        <div class="row">
+          <span class="sc" style="color:${c[2]}">${d.score !== null ? d.score : '—'}</span>
+          <span class="ar" style="color:${a[1]}">${a[0]}</span>
+        </div>
+        <div class="meta" style="color:${c[4]}">${meta}</div>
+        <div class="tap">tap for detail ›</div>
+      </div>`;
+  });
+  cardsEl.addEventListener('click', e => {
+    const card = e.target.closest('.card');
+    if (card) openPanel(+card.getAttribute('data-ix'));
+  });
+
+  // Notes block
+  const notesEl = document.getElementById('notes');
+  depts.forEach(d => {
+    const c = pal(d.rating);
+    const has = d.topIssue && d.topIssue.trim() !== '';
+    notesEl.innerHTML += `
+      <div class="nrow">
+        <span class="nd" style="color:${c[2]}">${d.label}</span>
+        <span class="nt" style="${has ? '' : 'color:#999'}">${has ? d.topIssue : 'No issues logged.'}</span>
+      </div>`;
+  });
+
+  // Trend chart
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trend'), {
+    type: 'line',
+    data: {
+      labels: trendWeeks.map(weekLabel),
+      datasets: [
+        {
+          label: 'Hospital',
+          data: hospitalTrend,
+          borderColor: '#1F3A5F',
+          backgroundColor: 'rgba(31,58,95,.07)',
+          borderWidth: 2.5,
+          tension: .35,
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: '#1F3A5F',
+          spanGaps: true
+        },
+        {
+          label: worstDept?.label || 'Worst dept',
+          data: worstTrend,
+          borderColor: '#A32D2D',
+          borderDash: [5,4],
+          borderWidth: 2,
+          tension: .35,
+          pointRadius: 0,
+          spanGaps: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display:true, labels:{ font:{size:11}, usePointStyle:true, boxWidth:8 } } },
+      scales: {
+        y: { min:1, max:5, ticks:{ stepSize:1, font:{size:11} }, grid:{ color:'#f0f0f0' } },
+        x: { ticks:{ font:{size:11} }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ── DRILL-DOWN PANEL (this week vs last week) ─────────────────────────────
+function openPanel(ix) {
+  const d  = currentDepts[ix];
+  const c  = pal(d.rating);
+  const cl = pal(d.ratingPrev || 'PENDING');
+
+  document.getElementById('pttl').textContent = d.label;
+
+  const lastTxt = d.ratingPrev
+    ? `${cap(d.ratingPrev)} · ${d.scorePrev !== null ? d.scorePrev : '—'}`
+    : '— no data';
+
+  let h = `
+    <div class="cmp">
+      <div class="cmpcol">
+        <h4>This week</h4>
+        <div class="big" style="color:${c[2]}">${cap(d.rating)} · ${d.score !== null ? d.score : '—'}</div>
+        <div class="sub">${d.complianceLabel}${d.keyFigure !== null ? ' · ' + d.keyFigure : ''}</div>
+      </div>
+      <div class="cmpcol">
+        <h4>Last week</h4>
+        <div class="big" style="color:${cl[2]}">${lastTxt}</div>
+        <div class="sub">${d.compliancePrev}${d.keyFigurePrev !== null ? ' · ' + d.keyFigurePrev : ''}</div>
+      </div>
+    </div>
+    <div class="seclbl">Sections — this week vs last</div>`;
+
+  // Section pills
+  const sectionsThisWeek  = d.sections || [];
+  const sectionsPrevWeek  = {};  // TODO: load from weeklyRollups prev week if needed
+
+  for (const sec of sectionsThisWeek) {
+    const letter = ragLetter(sec.rating);
+    const p = pilCol(letter);
+    h += `
+      <div class="srow">
+        <span>${sec.letter} ${sec.label}</span>
+        <span class="pill" style="background:${p[0]};color:${p[1]}">${letter}</span>
+        <span class="pill" style="background:#F1EFE8;color:#888">—</span>
+      </div>`;
+  }
+
+  if (d.topIssue && d.topIssue.trim()) {
+    h += `<div class="seclbl">Notes</div><div style="font-size:12px;color:#555;line-height:1.6">${d.topIssue}</div>`;
+  }
+
+  document.getElementById('pbody').innerHTML = h;
+  document.getElementById('ov').classList.add('show');
+}
+
+document.getElementById('pclose').addEventListener('click', () => {
+  document.getElementById('ov').classList.remove('show');
+});
+document.getElementById('ov').addEventListener('click', e => {
+  if (e.target.id === 'ov') document.getElementById('ov').classList.remove('show');
+});
+
+</script>
+</body>
+</html>
