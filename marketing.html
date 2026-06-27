@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HAE Marketing — Activity Report</title>
+<style>
+:root {
+  --navy:#1F3A5F;--navy-d:#162c4a;--gold:#C8A24B;--ink:#1a1c22;--mid:#6b7280;
+  --rule:#e2e0da;--paper:#f7f6f3;--white:#ffffff;
+  --green:#3B6D11;--green-b:#EAF3DE;--amber:#BA7517;--amber-b:#FAEEDA;
+  --red:#A32D2D;--red-b:#FCEBEB;--brand:#8b5cf6;--brand-b:#f0eaf8;--brand-d:#6d35e0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;min-height:100vh;padding-bottom:100px}
+.header{background:var(--navy);padding:16px 20px 14px;position:sticky;top:0;z-index:20}
+.header-brand{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.header-title{font-size:17px;font-weight:700;color:var(--white);letter-spacing:-0.01em}
+.header-meta{font-size:12px;color:#9FB3CC;margin-top:2px}
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
+.auth-card{background:var(--white);border-radius:14px;padding:36px 28px;width:100%;max-width:360px;text-align:center}
+.auth-logo{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin-bottom:4px}
+.auth-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--mid);margin-bottom:28px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 16px;background:var(--white);border:1.5px solid var(--rule);border-radius:8px;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;margin-bottom:10px;transition:border-color 0.15s}
+.btn-google:hover{border-color:var(--navy)}
+.auth-divider{font-size:11px;color:var(--mid);margin:8px 0}
+.auth-field{width:100%;padding:12px 14px;border:1.5px solid var(--rule);border-radius:8px;font-size:14px;color:var(--ink);background:var(--white);margin-bottom:10px;outline:none;transition:border-color 0.15s}
+.auth-field:focus{border-color:var(--navy)}
+.btn-primary{width:100%;padding:13px;background:var(--navy);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.auth-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+#form-screen{display:none}
+.top-bar{background:var(--white);border-bottom:1px solid var(--rule);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top-bar-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);white-space:nowrap}
+.date-input{font-size:13px;padding:6px 10px;border:1.5px solid var(--rule);border-radius:6px;background:var(--white);color:var(--ink);outline:none}
+.date-input:focus{border-color:var(--navy)}
+.user-pill{margin-left:auto;font-size:12px;color:var(--mid);display:flex;align-items:center;gap:6px}
+.btn-signout{font-size:11px;color:var(--mid);background:none;border:1px solid var(--rule);border-radius:4px;padding:3px 8px;cursor:pointer}
+.form-body{padding:16px 20px;max-width:640px;margin:0 auto}
+
+/* SECTION CARDS */
+.section-card{background:var(--white);border:1px solid var(--rule);border-radius:10px;margin-bottom:12px;overflow:hidden;transition:opacity 0.2s}
+.section-card.inactive{opacity:0.55}
+.section-head{background:var(--brand);padding:11px 16px;display:flex;align-items:center;gap:10px}
+.section-head.optional-head{background:#6d35e0}
+.section-letter{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--white);flex-shrink:0}
+.section-title{font-size:13px;font-weight:700;color:var(--white);letter-spacing:0.02em;flex:1}
+
+/* ACTIVE TOGGLE */
+.toggle-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.toggle-label{font-size:11px;color:rgba(255,255,255,0.7);font-weight:500}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,0.25);border-radius:20px;transition:background 0.2s}
+.toggle-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:transform 0.2s}
+.toggle input:checked + .toggle-slider{background:var(--green)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(16px)}
+
+.optional-badge{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.85);margin-left:4px}
+
+.section-body{padding:4px 0}
+.section-body.collapsed{display:none}
+
+.item-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--rule);gap:12px}
+.item-row:last-child{border-bottom:none}
+.item-label{flex:1;font-size:14px;color:var(--ink);line-height:1.4}
+.item-label.secondary{font-size:13px;color:var(--mid)}
+.num-group{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.num-input{width:72px;padding:7px 10px;border:1.5px solid var(--rule);border-radius:6px;font-size:14px;font-weight:600;color:var(--ink);background:var(--white);outline:none;text-align:center}
+.num-input:focus{border-color:var(--brand)}
+.num-unit{font-size:11px;color:var(--mid)}
+.rating-group{display:flex;gap:4px;flex-shrink:0}
+.r-btn{padding:6px 10px;border-radius:6px;border:1.5px solid var(--rule);background:var(--white);font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;transition:all 0.12s;min-width:40px;text-align:center}
+.r-btn:hover{border-color:var(--brand);color:var(--brand)}
+.r-btn.sel-yes{background:var(--green-b);border-color:var(--green);color:var(--green)}
+.r-btn.sel-most{background:var(--amber-b);border-color:var(--amber);color:var(--amber)}
+.r-btn.sel-no{background:var(--red-b);border-color:var(--red);color:var(--red)}
+.r-btn.sel-na{background:#f0f0f0;border-color:#ccc;color:#888}
+.note-row{padding:10px 16px;border-top:1px solid var(--rule)}
+.note-label{font-size:11px;font-weight:600;color:var(--mid);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px}
+.note-input{width:100%;padding:9px 12px;border:1.5px solid var(--rule);border-radius:6px;font-size:13px;color:var(--ink);background:var(--paper);outline:none;resize:none;font-family:inherit;line-height:1.4}
+.note-input:focus{border-color:var(--brand);background:var(--white)}
+
+/* INACTIVE OVERLAY MESSAGE */
+.inactive-msg{padding:14px 16px;font-size:13px;color:var(--mid);font-style:italic}
+
+.submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--rule);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 16px rgba(0,0,0,0.08);z-index:20}
+.submit-status{font-size:12px;color:var(--mid)}
+.submit-status strong{color:var(--ink)}
+.btn-submit{padding:12px 28px;background:var(--brand);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s}
+.btn-submit:hover{background:var(--brand-d)}
+.btn-submit:disabled{background:var(--mid);cursor:not-allowed}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all 0.25s;pointer-events:none;z-index:100;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+@media(max-width:480px){
+  .r-btn{padding:7px 7px;min-width:36px;font-size:11px}
+  .item-label{font-size:13px}
+  .num-input{width:60px}
+}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Hospital at Ekhaya</div>
+    <div class="auth-title">Marketing</div>
+    <div class="auth-sub">Sign in to submit your activity report</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <div class="auth-divider">or</div>
+    <input class="auth-field" type="email" id="auth-email" placeholder="Email address">
+    <input class="auth-field" type="password" id="auth-password" placeholder="Password">
+    <button class="btn-primary" onclick="signInEmail()">Sign in</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<div id="form-screen">
+  <div class="header">
+    <div class="header-brand">Hospital at Ekhaya</div>
+    <div class="header-title">Marketing — Activity Report</div>
+    <div class="header-meta" id="header-meta">—</div>
+  </div>
+  <div class="top-bar">
+    <span class="top-bar-label">Date:</span>
+    <input type="date" class="date-input" id="shift-date" onchange="updateMeta()">
+    <div class="user-pill">
+      <span id="user-display"></span>
+      <button class="btn-signout" onclick="doSignOut()">Out</button>
+    </div>
+  </div>
+  <div class="form-body" id="form-body"></div>
+  <div class="submit-bar">
+    <div class="submit-status">
+      <strong id="answered-count">0</strong> / <span id="total-count">0</span> items answered
+    </div>
+    <button class="btn-submit" id="btn-submit" onclick="submitForm()">Submit report</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBla6UBluNcWVKPSU8U30IuTSubLb7R2Kc",
+  authDomain:"hae-vuma-92fca.firebaseapp.com",
+  projectId:"hae-vuma-92fca",
+  storageBucket:"hae-vuma-92fca.firebasestorage.app",
+  messagingSenderId:"1052424261313",
+  appId:"1:1052424261313:web:a4bebe68d6f9ba14fa0e40"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// optional:true = has Active Today toggle, starts collapsed
+const SECTIONS = [
+  {
+    id:'whatsappChannelGrowth', letter:'A', label:'WhatsApp Channel Growth',
+    optional: false,
+    items:[
+      { id:'newFollowers',          label:'New followers gained today',              type:'number', unit:'followers' },
+      { id:'qrPostersVisible',      label:'QR posters visible at key points',        type:'rating' },
+      { id:'visitorsAssisted',      label:'Patients / visitors assisted to follow',  type:'rating' },
+      { id:'linkShared',            label:'Channel link shared or encouraged',        type:'rating' },
+      { id:'followerNumberReported',label:'Daily follower number reported',           type:'rating' },
+    ]
+  },
+  {
+    id:'staffWhatsappStatus', letter:'B', label:'Staff WhatsApp Status Drive',
+    optional: false,
+    items:[
+      { id:'deptVisitedCount',  label:'Departments visited for status drive', type:'number', unit:'depts'  },
+      { id:'staffPostedStatus', label:'Staff posted approved status message',  type:'rating' },
+      { id:'repostReminder',    label:'Repost reminder given (24h expiry)',    type:'rating' },
+      { id:'checklistUpdated',  label:'Status checklist updated',              type:'rating' },
+    ]
+  },
+  {
+    id:'facebook', letter:'C', label:'Facebook',
+    optional: false,
+    items:[
+      { id:'postsPublished',    label:'Posts published today',                       type:'number', unit:'posts' },
+      { id:'postingCadence',    label:'Posting cadence on track (3–4 per week)',     type:'rating' },
+      { id:'commentsResponded', label:'Comments and messages responded within 60min',type:'rating' },
+      { id:'queriesBridged',    label:'Public queries bridged to private or phone',  type:'rating' },
+      { id:'reviewDrive',       label:'Review drive actioned (cards / follow-ups)',  type:'rating' },
+    ]
+  },
+  {
+    id:'patientFollowUpCalls', letter:'D', label:'Patient Follow-up Calls',
+    optional: false,
+    items:[
+      { id:'callsMade',         label:'Post-discharge calls made today',        type:'number', unit:'calls'  },
+      { id:'callsWithinWindow', label:'Calls within 3-week post-discharge window',type:'rating' },
+      { id:'callLogCompleted',  label:'Call log completed',                      type:'rating' },
+      { id:'concernsEscalated', label:'Flagged concerns escalated to COO',       type:'rating' },
+    ]
+  },
+  {
+    id:'popUpActivation', letter:'E', label:'Pop-Up Community Activation',
+    optional: true,
+    items:[
+      { id:'patientsContacted', label:'People contacted at activation',         type:'number', unit:'people' },
+      { id:'referralsCount',    label:'Referrals into hospital generated',       type:'number', unit:'referrals' },
+      { id:'unitBranded',       label:'Unit set up and branded correctly',       type:'rating' },
+      { id:'nurseScreening',    label:'Nurse screening within scope',            type:'rating' },
+      { id:'activationLog',     label:'Activation log submitted',               type:'rating' },
+    ]
+  },
+  {
+    id:'reviewsSocialProof', letter:'F', label:'Reviews & Social Proof',
+    optional: false,
+    items:[
+      { id:'googleReviews',           label:'New Google reviews this week',         type:'number', unit:'reviews' },
+      { id:'facebookReviews',         label:'New Facebook reviews this week',       type:'number', unit:'reviews' },
+      { id:'reviewCardsHandedOut',    label:'Review request cards handed out',      type:'rating' },
+      { id:'positiveReviewReposted',  label:'Positive review reposted as spotlight',type:'rating' },
+    ]
+  },
+  {
+    id:'strategyInfrastructure', letter:'G', label:'Strategy & Infrastructure',
+    optional: true,
+    items:[
+      { id:'metaPixel',       label:'Meta Pixel installed and firing',                    type:'rating' },
+      { id:'gbpUpdated',      label:'Google Business Profile updated (photos/posts/Q&A)', type:'rating' },
+      { id:'websiteButtonLive',label:'Website button live on GBP',                       type:'rating' },
+      { id:'anchorContent',   label:'Anchor content session or assets on track',          type:'rating' },
+      { id:'adSpendTracked',  label:'Ad spend tracked vs bookings',                       type:'rating' },
+    ]
+  },
+];
+
+let currentUser = null;
+const answers  = {};
+const notes    = {};
+// Track which optional sections are active
+const sectionActive = {};
+SECTIONS.forEach(s => { sectionActive[s.id] = !s.optional; });
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('form-screen').style.display = 'block';
+    document.getElementById('user-display').textContent = user.displayName || user.email?.split('@')[0] || 'Marketing';
+    initForm();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('form-screen').style.display = 'none';
+  }
+});
+
+window.signInGoogle = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e) { showAuthError(e.message); }
+};
+window.signInEmail = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-password').value;
+  if (!email || !pass) { showAuthError('Enter your email and password.'); return; }
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { showAuthError('Invalid email or password.'); }
+};
+window.doSignOut = () => signOut(auth);
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function initForm() {
+  const today = new Date();
+  document.getElementById('shift-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  renderForm();
+  updateMeta();
+}
+
+window.updateMeta = function() {
+  const dateVal = document.getElementById('shift-date').value;
+  const dateStr = dateVal
+    ? new Date(dateVal+'T12:00:00').toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    : '—';
+  document.getElementById('header-meta').textContent = dateStr;
+};
+
+window.toggleSection = function(secId, checked) {
+  sectionActive[secId] = checked;
+  // Clear answers for deactivated section
+  if (!checked) {
+    const sec = SECTIONS.find(s => s.id === secId);
+    if (sec) sec.items.forEach(item => { delete answers[`${secId}.${item.id}`]; });
+    delete notes[secId];
+  }
+  renderForm();
+};
+
+function renderForm() {
+  const body = document.getElementById('form-body');
+  body.innerHTML = '';
+  let totalRating = 0, answered = 0;
+
+  for (const sec of SECTIONS) {
+    const isActive  = sectionActive[sec.id];
+    const isOptional = sec.optional;
+
+    const card = document.createElement('div');
+    card.className = 'section-card' + (isOptional && !isActive ? ' inactive' : '');
+
+    // Section header — optional sections get a toggle
+    const toggleHtml = isOptional ? `
+      <div class="toggle-wrap">
+        <span class="toggle-label">${isActive ? 'Active' : 'Off'}</span>
+        <label class="toggle">
+          <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleSection('${sec.id}',this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>` : '';
+
+    const optBadge = isOptional ? `<span class="optional-badge">optional</span>` : '';
+
+    card.innerHTML = `
+      <div class="section-head ${isOptional ? 'optional-head' : ''}">
+        <div class="section-letter">${sec.letter}</div>
+        <div class="section-title">${sec.label}${optBadge}</div>
+        ${toggleHtml}
+      </div>
+      <div class="section-body ${isOptional && !isActive ? 'collapsed' : ''}" id="sec-${sec.id}"></div>`;
+
+    body.appendChild(card);
+
+    if (isOptional && !isActive) continue;
+
+    const secBody = card.querySelector(`#sec-${sec.id}`);
+
+    for (const item of sec.items) {
+      const key = `${sec.id}.${item.id}`;
+      const val = answers[key] || '';
+
+      if (item.type === 'rating') {
+        totalRating++;
+        if (val) answered++;
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <span class="item-label">${item.label}</span>
+          <div class="rating-group">
+            <button class="r-btn ${val==='Yes'?'sel-yes':''}"  onclick="setA('${sec.id}','${item.id}','Yes')">Yes</button>
+            <button class="r-btn ${val==='Most'?'sel-most':''}" onclick="setA('${sec.id}','${item.id}','Most')">Most</button>
+            <button class="r-btn ${val==='No'?'sel-no':''}"    onclick="setA('${sec.id}','${item.id}','No')">No</button>
+            <button class="r-btn ${val==='N-A'?'sel-na':''}"   onclick="setA('${sec.id}','${item.id}','N-A')">N/A</button>
+          </div>`;
+        secBody.appendChild(row);
+
+      } else if (item.type === 'number') {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <span class="item-label secondary">${item.label}</span>
+          <div class="num-group">
+            <input class="num-input" type="number" min="0" value="${val}" placeholder="0"
+              onchange="setD('${sec.id}','${item.id}',this.value)"
+              oninput="setD('${sec.id}','${item.id}',this.value)">
+            <span class="num-unit">${item.unit||''}</span>
+          </div>`;
+        secBody.appendChild(row);
+      }
+    }
+
+    // Note
+    const noteRow = document.createElement('div');
+    noteRow.className = 'note-row';
+    noteRow.innerHTML = `
+      <div class="note-label">Notes</div>
+      <textarea class="note-input" rows="2" placeholder="Optional note…"
+        onchange="setNote('${sec.id}',this.value)"
+        oninput="setNote('${sec.id}',this.value)">${notes[sec.id]||''}</textarea>`;
+    secBody.appendChild(noteRow);
+  }
+
+  document.getElementById('answered-count').textContent = answered;
+  document.getElementById('total-count').textContent    = totalRating;
+}
+
+window.setA    = (s,i,v) => { answers[`${s}.${i}`]=v; renderForm(); };
+window.setD    = (s,i,v) => { answers[`${s}.${i}`]=v; };
+window.setNote = (s,v)   => { notes[s]=v; };
+
+window.submitForm = async function() {
+  const dateVal = document.getElementById('shift-date').value;
+  if (!dateVal) { showToast('Select a date first','error'); return; }
+
+  // Only warn on unanswered items in ACTIVE sections
+  let unanswered = 0;
+  for (const sec of SECTIONS) {
+    if (!sectionActive[sec.id]) continue;
+    for (const item of sec.items)
+      if (item.type==='rating' && !answers[`${sec.id}.${item.id}`]) unanswered++;
+  }
+  if (unanswered > 0) {
+    const msg = unanswered===1
+      ? '1 item has not been answered. Submit anyway?'
+      : `${unanswered} items have not been answered. Submit anyway?`;
+    if (!confirm(msg)) return;
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  // Build sections — include all, inactive ones land as empty
+  const sectionsData = {};
+  for (const sec of SECTIONS) {
+    const items = {};
+    if (sectionActive[sec.id]) {
+      for (const item of sec.items) items[item.id] = answers[`${sec.id}.${item.id}`] || '';
+    }
+    sectionsData[sec.id] = {
+      items,
+      note: sectionActive[sec.id] ? (notes[sec.id]||'') : '',
+      skipped: !sectionActive[sec.id],
+    };
+  }
+
+  const entryDate  = new Date(dateVal+'T12:00:00Z');
+  const daysToThu  = (4 - entryDate.getUTCDay() + 7) % 7;
+  const thu        = new Date(entryDate);
+  thu.setUTCDate(entryDate.getUTCDate() + daysToThu);
+  const weekEnding = thu.toISOString().split('T')[0];
+  const days       = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const docId      = `marketing__${dateVal}__single`;
+
+  try {
+    await setDoc(doc(db,'submissions',docId), {
+      deptId:           'marketing',
+      deptLabel:        'Marketing',
+      date:             Timestamp.fromDate(new Date(dateVal+'T00:00:00Z')),
+      dateStr:          dateVal,
+      dayOfWeek:        days[entryDate.getUTCDay()],
+      shift:            'single',
+      weekEnding,
+      submittedBy:      currentUser?.uid||'',
+      submittedByEmail: currentUser?.email||'',
+      submittedByName:  currentUser?.displayName||currentUser?.email?.split('@')[0]||'Marketing',
+      submittedAt:      Timestamp.now(),
+      sections:         sectionsData,
+      migratedFromLegacy: false,
+    });
+
+    showToast('✓ Report submitted','success');
+    setTimeout(() => {
+      Object.keys(answers).forEach(k=>delete answers[k]);
+      Object.keys(notes).forEach(k=>delete notes[k]);
+      SECTIONS.forEach(s => { sectionActive[s.id] = !s.optional; });
+      renderForm();
+      btn.disabled=false; btn.textContent='Submit report';
+    }, 1200);
+
+  } catch(e) {
+    showToast('Submit failed: '+e.message,'error');
+    btn.disabled=false; btn.textContent='Submit report';
+  }
+};
+
+function showToast(msg,type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>{ t.className='toast'; },2800);
+}
+</script>
+</body>
+</html>
