@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAE Risk Register — COO Review</title>
+<style>
+:root {
+  --navy:#1F3A5F;--navy-d:#162c4a;--gold:#C8A24B;--ink:#1a1c22;--mid:#6b7280;
+  --rule:#e2e0da;--paper:#f7f6f3;--white:#ffffff;
+  --green:#15803d;--green-b:#f0fdf4;--amber:#b45309;--amber-b:#fffbeb;
+  --red:#A32D2D;--red-b:#fef2f2;--orange:#c2410c;--orange-b:#fff7ed;
+  --extreme-bg:#7f1d1d;--high-bg:#c2410c;--moderate-bg:#b45309;--low-bg:#15803d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
+.auth-card{background:var(--white);border-radius:14px;padding:36px 28px;width:100%;max-width:360px;text-align:center}
+.auth-logo{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin-bottom:4px}
+.auth-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--mid);margin-bottom:28px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 16px;background:var(--white);border:1.5px solid var(--rule);border-radius:8px;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;margin-bottom:10px}
+.auth-divider{font-size:11px;color:var(--mid);margin:8px 0}
+.auth-field{width:100%;padding:12px 14px;border:1.5px solid var(--rule);border-radius:8px;font-size:14px;color:var(--ink);background:var(--white);margin-bottom:10px;outline:none}
+.auth-field:focus{border-color:var(--navy)}
+.btn-primary{width:100%;padding:13px;background:var(--navy);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.auth-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+
+/* ACCESS DENIED */
+#access-screen{display:none;min-height:100vh;background:var(--navy);align-items:center;justify-content:center;padding:24px}
+
+/* APP */
+#app{display:none}
+
+/* HEADER */
+.header{background:var(--navy);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.header-brand{font-size:15px;font-weight:700;color:var(--white);letter-spacing:-0.01em}
+.header-brand span{color:var(--gold)}
+.header-right{display:flex;align-items:center;gap:12px}
+.user-badge{font-size:12px;color:rgba(255,255,255,0.7)}
+.btn-signout-h{font-size:11px;color:var(--mid);background:none;border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:4px 10px;cursor:pointer;color:rgba(255,255,255,0.6)}
+
+/* VIEW TABS */
+.view-tabs{background:var(--white);border-bottom:1px solid var(--rule);padding:0 24px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.view-tabs::-webkit-scrollbar{display:none}
+.view-tab{padding:12px 14px;font-size:12px;font-weight:600;color:var(--mid);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:inherit}
+.view-tab:hover{color:var(--ink)}
+.view-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+.view-tab .tab-count{display:inline-block;font-size:10px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;background:var(--paper);color:var(--mid)}
+.view-tab.active .tab-count{background:var(--navy);color:var(--white)}
+
+/* STATS BAR */
+.stats-bar{background:var(--white);border-bottom:1px solid var(--rule);padding:12px 24px;display:flex;gap:20px;overflow-x:auto}
+.stat{flex-shrink:0;text-align:center}
+.stat-value{font-size:20px;font-weight:700;line-height:1}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--mid);margin-top:2px}
+
+/* MAIN */
+.main{padding:20px 24px;max-width:1100px;margin:0 auto}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-select{font-size:12px;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--white);color:var(--ink);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--navy)}
+.filter-search{font-size:12px;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--white);color:var(--ink);outline:none;width:200px}
+.filter-count{font-size:12px;color:var(--mid);margin-left:auto}
+
+/* RISK TABLE */
+.risk-table{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.risk-table th{background:var(--paper);padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--mid);text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+.risk-table td{padding:12px 14px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:13px}
+.risk-table tr:last-child td{border-bottom:none}
+.risk-table tr:hover td{background:var(--paper);cursor:pointer}
+
+/* RATING PILL */
+.pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.pill-extreme{background:#fef2f2;color:#7f1d1d;border:1px solid #fca5a5}
+.pill-high{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.pill-moderate{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+.pill-low{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.pill-pending{background:var(--paper);color:var(--mid);border:1px solid var(--rule)}
+.pill-open{background:#EBF1F7;color:var(--navy);border:1px solid #bfdbfe}
+.pill-inprogress{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+.pill-monitor{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.pill-closed{background:var(--paper);color:var(--mid);border:1px solid var(--rule)}
+.pill-yes{background:#f0fdf4;color:#15803d}
+.pill-no{background:#fef2f2;color:#7f1d1d}
+
+/* OVERDUE */
+.overdue-flag{color:var(--red);font-size:10px;font-weight:700}
+
+/* REVIEW PANEL (overlay) */
+.overlay{position:fixed;inset:0;background:rgba(20,30,45,0.55);display:none;z-index:200;overflow-y:auto;padding:24px 16px}
+.overlay.show{display:flex;align-items:flex-start;justify-content:center}
+.review-panel{background:var(--white);border-radius:14px;width:100%;max-width:760px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.rp-header{background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
+.rp-title{font-size:16px;font-weight:700;color:var(--white)}
+.rp-subtitle{font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px}
+.rp-close{background:none;border:none;color:rgba(255,255,255,0.6);font-size:22px;cursor:pointer;line-height:1}
+.rp-body{padding:22px}
+
+/* PANEL SECTIONS */
+.rp-section{margin-bottom:22px}
+.rp-section-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mid);padding-bottom:8px;border-bottom:1px solid var(--rule);margin-bottom:14px}
+.rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rp-grid.three{grid-template-columns:1fr 1fr 1fr}
+.rp-field{margin-bottom:0}
+.rp-field label{display:block;font-size:11px;font-weight:700;color:var(--mid);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:5px}
+.rp-field .readonly-val{font-size:13px;color:var(--ink);padding:8px 0;line-height:1.5}
+.rp-field .readonly-val.para{background:var(--paper);padding:10px 12px;border-radius:6px;border:1px solid var(--rule);font-size:13px;line-height:1.5}
+.rp-select, .rp-input, .rp-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--rule);border-radius:6px;font-size:13px;color:var(--ink);background:var(--white);outline:none;font-family:inherit;transition:border-color 0.15s}
+.rp-select:focus, .rp-input:focus, .rp-textarea:focus{border-color:var(--navy)}
+.rp-textarea{resize:vertical;min-height:70px}
+.rp-computed{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--mid)}
+
+/* COMPUTED SCORE DISPLAY */
+.rp-score-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.rp-score-box{padding:8px 14px;border-radius:6px;text-align:center}
+.rp-score-box .val{font-size:20px;font-weight:700;line-height:1}
+.rp-score-box .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
+
+/* AUDIT TRAIL */
+.audit-list{list-style:none}
+.audit-item{padding:10px 0;border-bottom:1px solid var(--rule);display:flex;gap:12px}
+.audit-item:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-top:5px}
+.audit-content{flex:1}
+.audit-note{font-size:13px;color:var(--ink)}
+.audit-meta{font-size:11px;color:var(--mid);margin-top:2px}
+
+/* PANEL FOOTER */
+.rp-footer{padding:16px 22px;border-top:1px solid var(--rule);display:flex;justify-content:flex-end;gap:10px;background:var(--paper)}
+.btn-cancel{padding:9px 18px;background:none;border:1.5px solid var(--rule);border-radius:6px;font-size:13px;font-weight:600;color:var(--mid);cursor:pointer}
+.btn-save{padding:9px 22px;background:var(--navy);color:var(--white);border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:disabled{background:var(--mid);cursor:not-allowed}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 24px;color:var(--mid)}
+.empty-icon{font-size:32px;margin-bottom:12px}
+.empty h3{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+
+/* LOADING */
+.loading{text-align:center;padding:48px;color:var(--mid);font-size:13px}
+.spinner{width:24px;height:24px;border:2px solid var(--rule);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:all 0.2s;pointer-events:none;z-index:300}
+.toast.show{opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+@media(max-width:640px){
+  .rp-grid,.rp-grid.three{grid-template-columns:1fr}
+  .main{padding:16px}
+  .stats-bar{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Hospital at Ekhaya</div>
+    <div class="auth-title">Risk Register</div>
+    <div class="auth-sub">COO access only</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <div class="auth-divider">or</div>
+    <input class="auth-field" type="email" id="auth-email" placeholder="Email address">
+    <input class="auth-field" type="password" id="auth-password" placeholder="Password">
+    <button class="btn-primary" onclick="signInEmail()">Sign in</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- ACCESS DENIED -->
+<div id="access-screen">
+  <div class="auth-card">
+    <div style="font-size:32px;margin-bottom:16px">🔒</div>
+    <div class="auth-title">Access restricted</div>
+    <div class="auth-sub" style="margin-bottom:20px">The Risk Register is accessible to the COO only. Contact Jacques Bornman if you need access.</div>
+    <button class="btn-primary" onclick="doSignOut()">Sign out</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-brand">HAE <span>Risk Register</span></div>
+    <div class="header-right">
+      <span class="user-badge" id="user-badge">—</span>
+      <button class="btn-signout-h" onclick="doSignOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total</div></div>
+    <div class="stat"><div class="stat-value" style="color:#7f1d1d" id="stat-extreme">—</div><div class="stat-label">Extreme</div></div>
+    <div class="stat"><div class="stat-value" style="color:#c2410c" id="stat-high">—</div><div class="stat-label">High</div></div>
+    <div class="stat"><div class="stat-value" style="color:#b45309" id="stat-moderate">—</div><div class="stat-label">Moderate</div></div>
+    <div class="stat"><div class="stat-value" style="color:#15803d" id="stat-low">—</div><div class="stat-label">Low</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--red)" id="stat-exceeding">—</div><div class="stat-label">Exceeding</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--amber)" id="stat-pending">—</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--red)" id="stat-overdue">—</div><div class="stat-label">Overdue</div></div>
+  </div>
+
+  <!-- VIEW TABS -->
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="setView('all')" id="tab-all">All Risks <span class="tab-count" id="cnt-all">0</span></button>
+    <button class="view-tab" onclick="setView('pending')" id="tab-pending">Pending Review <span class="tab-count" id="cnt-pending">0</span></button>
+    <button class="view-tab" onclick="setView('exceeding')" id="tab-exceeding">Exceeding Tolerance <span class="tab-count" id="cnt-exceeding">0</span></button>
+    <button class="view-tab" onclick="setView('overdue')" id="tab-overdue">Overdue Actions <span class="tab-count" id="cnt-overdue">0</span></button>
+    <button class="view-tab" onclick="setView('clinical')" id="tab-clinical">Clinical <span class="tab-count" id="cnt-clinical">0</span></button>
+    <button class="view-tab" onclick="setView('operational')" id="tab-operational">Operational <span class="tab-count" id="cnt-operational">0</span></button>
+    <button class="view-tab" onclick="setView('compliance')" id="tab-compliance">Compliance <span class="tab-count" id="cnt-compliance">0</span></button>
+    <button class="view-tab" onclick="setView('closed')" id="tab-closed">Closed <span class="tab-count" id="cnt-closed">0</span></button>
+  </div>
+
+  <div class="main">
+    <!-- FILTERS -->
+    <div class="filters">
+      <select class="filter-select" id="filter-rating" onchange="applyFilters()">
+        <option value="">All ratings</option>
+        <option value="Extreme">Extreme</option>
+        <option value="High">High</option>
+        <option value="Moderate">Moderate</option>
+        <option value="Low">Low</option>
+      </select>
+      <select class="filter-select" id="filter-status" onchange="applyFilters()">
+        <option value="">All statuses</option>
+        <option value="Pending Review">Pending Review</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Monitor">Monitor</option>
+        <option value="Closed">Closed</option>
+      </select>
+      <input type="text" class="filter-search" id="filter-search" placeholder="Search…" oninput="applyFilters()">
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <!-- TABLE -->
+    <div id="table-container">
+      <div class="loading"><div class="spinner"></div>Loading risk register…</div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="review-panel">
+    <div class="rp-header">
+      <div>
+        <div class="rp-title" id="rp-title">—</div>
+        <div class="rp-subtitle" id="rp-subtitle">—</div>
+      </div>
+      <button class="rp-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="rp-body" id="rp-body"></div>
+    <div class="rp-footer">
+      <button class="btn-cancel" onclick="closePanel()">Cancel</button>
+      <button class="btn-save" id="btn-save" onclick="saveReview()">Save review</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, query, orderBy }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider,
+         signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBla6UBluNcWVKPSU8U30IuTSubLb7R2Kc",
+  authDomain:"hae-vuma-92fca.firebaseapp.com",
+  projectId:"hae-vuma-92fca",
+  storageBucket:"hae-vuma-92fca.firebasestorage.app",
+  messagingSenderId:"1052424261313",
+  appId:"1:1052424261313:web:a4bebe68d6f9ba14fa0e40"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+const COO_EMAILS = ['shakabornman@gmail.com', 'phentela@vumads.co.za'];
+
+let currentUser = null;
+let allRisks    = [];
+let currentView = 'all';
+let currentRisk = null;
+
+// ── RATING ENGINE ─────────────────────────────────────────────────────────
+function parseLevel(v) {
+  if (!v) return null;
+  const n = parseInt(String(v).trim().charAt(0), 10);
+  return (n >= 1 && n <= 5) ? n : null;
+}
+
+function rateRisk(likelihood, consequence) {
+  if (!likelihood || !consequence) return { score:'', rating:'' };
+  const score = likelihood * consequence;
+  let rating;
+  if (score >= 15)     rating = 'Extreme';
+  else if (score >= 8) rating = 'High';
+  else if (score >= 4) rating = 'Moderate';
+  else                 rating = 'Low';
+  if (consequence === 5 && rating !== 'Extreme') rating = 'High';
+  return { score, rating };
+}
+
+function withinAppetite(r) { return (r==='Low'||r==='Moderate') ? 'Yes' : 'No'; }
+const FREQ = { Extreme:'Weekly', High:'Bi-weekly', Moderate:'Monthly', Low:'Quarterly' };
+
+function pillClass(r) {
+  const m = { Extreme:'extreme', High:'high', Moderate:'moderate', Low:'low',
+    'Pending Review':'pending', Open:'open', 'In Progress':'inprogress',
+    Monitor:'monitor', Closed:'closed', Yes:'yes', No:'no' };
+  return 'pill pill-' + (m[r] || 'pending');
+}
+
+function isOverdue(risk) {
+  if (!risk.targetCompletionDate || risk.status === 'Closed') return false;
+  return new Date(risk.targetCompletionDate) < new Date();
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  if (user) {
+    if (COO_EMAILS.includes(user.email)) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('access-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('user-badge').textContent = user.displayName || user.email;
+      await loadRisks();
+    } else {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('access-screen').style.display = 'flex';
+    }
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('access-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+window.signInGoogle = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e) { showAuthError('Sign in failed.'); }
+};
+window.signInEmail = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-password').value;
+  if (!email||!pass) { showAuthError('Enter email and password.'); return; }
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { showAuthError('Invalid email or password.'); }
+};
+window.doSignOut = () => signOut(auth);
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── LOAD RISKS ────────────────────────────────────────────────────────────
+async function loadRisks() {
+  try {
+    const snap = await getDocs(query(collection(db, 'risks'), orderBy('riskId', 'asc')));
+    allRisks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateStats();
+    updateCounts();
+    applyFilters();
+  } catch(e) {
+    document.getElementById('table-container').innerHTML =
+      `<div class="empty"><div class="empty-icon">⚠️</div><h3>Could not load risks</h3><p>${e.message}</p></div>`;
+  }
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────
+function updateStats() {
+  const active = allRisks.filter(r => r.status !== 'Closed');
+  const ratingOf = r => r.residualRating || r.inherentRating || '';
+  document.getElementById('stat-total').textContent    = allRisks.length;
+  document.getElementById('stat-extreme').textContent  = active.filter(r => ratingOf(r)==='Extreme').length;
+  document.getElementById('stat-high').textContent     = active.filter(r => ratingOf(r)==='High').length;
+  document.getElementById('stat-moderate').textContent = active.filter(r => ratingOf(r)==='Moderate').length;
+  document.getElementById('stat-low').textContent      = active.filter(r => ratingOf(r)==='Low').length;
+  document.getElementById('stat-exceeding').textContent= active.filter(r => r.withinAppetite==='No').length;
+  document.getElementById('stat-pending').textContent  = allRisks.filter(r => r.status==='Pending Review').length;
+  document.getElementById('stat-overdue').textContent  = allRisks.filter(isOverdue).length;
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────────────────
+function getViewRisks(view) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ratingOf = r => r.residualRating || r.inherentRating || '';
+  switch(view) {
+    case 'pending':    return allRisks.filter(r => r.status==='Pending Review');
+    case 'exceeding':  return allRisks.filter(r => r.withinAppetite==='No' && r.status!=='Closed');
+    case 'overdue':    return allRisks.filter(isOverdue);
+    case 'clinical':   return allRisks.filter(r => r.registerCategory?.startsWith('Clinical') || r.registerCategory==='Patient Safety' || r.registerCategory==='Incident' || r.registerCategory==='Adverse Event');
+    case 'operational':return allRisks.filter(r => r.registerCategory?.startsWith('Operational') || r.registerCategory?.startsWith('Infrastructure') || r.registerCategory==='Facilities');
+    case 'compliance': return allRisks.filter(r => r.registerCategory?.startsWith('Compliance') || r.registerCategory?.startsWith('Legal') || r.registerCategory?.startsWith('Financial') || r.registerCategory?.startsWith('Reputational'));
+    case 'closed':     return allRisks.filter(r => r.status==='Closed');
+    default:           return allRisks;
+  }
+}
+
+function updateCounts() {
+  const views = ['all','pending','exceeding','overdue','clinical','operational','compliance','closed'];
+  views.forEach(v => {
+    const el = document.getElementById('cnt-'+v);
+    if (el) el.textContent = getViewRisks(v).length;
+  });
+}
+
+window.setView = function(view) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+view)?.classList.add('active');
+  document.getElementById('filter-rating').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-search').value = '';
+  applyFilters();
+};
+
+// ── FILTERS ───────────────────────────────────────────────────────────────
+window.applyFilters = function() {
+  let risks = getViewRisks(currentView);
+  const rating  = document.getElementById('filter-rating').value;
+  const status  = document.getElementById('filter-status').value;
+  const search  = document.getElementById('filter-search').value.toLowerCase();
+  const ratingOf = r => r.residualRating || r.inherentRating || '';
+
+  if (rating) risks = risks.filter(r => ratingOf(r)===rating);
+  if (status) risks = risks.filter(r => r.status===status);
+  if (search) risks = risks.filter(r =>
+    r.riskId?.toLowerCase().includes(search) ||
+    r.description?.toLowerCase().includes(search) ||
+    r.registerCategory?.toLowerCase().includes(search) ||
+    r.riskArea?.toLowerCase().includes(search)
+  );
+
+  document.getElementById('filter-count').textContent = `${risks.length} risk${risks.length!==1?'s':''}`;
+  renderTable(risks);
+};
+
+// ── RENDER TABLE ──────────────────────────────────────────────────────────
+function renderTable(risks) {
+  const container = document.getElementById('table-container');
+  if (!risks.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><h3>No risks in this view</h3><p>All clear here.</p></div>`;
+    return;
+  }
+
+  const ratingOf = r => r.residualRating || r.inherentRating || '';
+
+  container.innerHTML = `
+    <div style="overflow-x:auto">
+    <table class="risk-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Inherent</th>
+          <th>Residual</th>
+          <th>Appetite</th>
+          <th>Status</th>
+          <th>Target</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${risks.map(r => {
+          const overdue = isOverdue(r);
+          const eff = ratingOf(r);
+          return `<tr onclick="openRisk('${r.riskId}')">
+            <td style="font-weight:600;white-space:nowrap">${r.riskId}</td>
+            <td style="white-space:nowrap;color:var(--mid)">${r.dateIdentified||'—'}</td>
+            <td style="font-size:12px;max-width:140px">${r.registerCategory||'—'}</td>
+            <td style="max-width:220px;font-size:12px">${(r.description||'').substring(0,80)}${(r.description||'').length>80?'…':''}</td>
+            <td><span class="${pillClass(r.inherentRating)}">${r.inherentRating||'—'} ${r.inherentScore?'('+r.inherentScore+')':''}</span></td>
+            <td><span class="${pillClass(r.residualRating||'')}">${r.residualRating||'—'} ${r.residualScore?'('+r.residualScore+')':''}</span></td>
+            <td><span class="${pillClass(r.withinAppetite||'')}">${r.withinAppetite||'—'}</span></td>
+            <td><span class="${pillClass(r.status)}">${r.status||'—'}</span></td>
+            <td style="white-space:nowrap">${r.targetCompletionDate||'—'}${overdue?'<br><span class="overdue-flag">OVERDUE</span>':''}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+// ── OPEN RISK FOR REVIEW ──────────────────────────────────────────────────
+window.openRisk = function(riskId) {
+  currentRisk = allRisks.find(r => r.riskId === riskId);
+  if (!currentRisk) return;
+  const r = currentRisk;
+
+  document.getElementById('rp-title').textContent = r.riskId + ' — ' + (r.registerCategory||'');
+  document.getElementById('rp-subtitle').textContent =
+    `Submitted by ${r.submittedByName||r.submittedBy||'—'} on ${r.dateIdentified||'—'} · ${r.status}`;
+
+  const ratingOf = r.residualRating || r.inherentRating || '';
+  const col = {
+    Extreme:  '#7f1d1d', High: '#c2410c', Moderate: '#b45309', Low: '#15803d'
+  };
+
+  document.getElementById('rp-body').innerHTML = `
+
+    <!-- SUBMITTED INFO (read-only) -->
+    <div class="rp-section">
+      <div class="rp-section-title">Submitted Information — read only</div>
+      <div class="rp-grid">
+        <div class="rp-field"><label>Risk Area</label><div class="readonly-val">${r.riskArea||'—'}</div></div>
+        <div class="rp-field"><label>Patient Harm Level</label><div class="readonly-val">${r.patientHarmLevel||'—'}</div></div>
+      </div>
+      <div class="rp-field" style="margin-top:12px"><label>Description</label><div class="readonly-val para">${r.description||'—'}</div></div>
+      <div class="rp-grid" style="margin-top:12px">
+        <div class="rp-field"><label>Current Controls</label><div class="readonly-val para">${r.currentControls||'—'}</div></div>
+        <div class="rp-field"><label>Recommended Mitigation</label><div class="readonly-val para">${r.recommendedMitigation||'—'}</div></div>
+      </div>
+      <div class="rp-field" style="margin-top:12px"><label>Suggested Action Owner</label><div class="readonly-val">${r.suggestedActionOwner||'—'}</div></div>
+    </div>
+
+    <!-- INHERENT RATING (computed, read-only) -->
+    <div class="rp-section">
+      <div class="rp-section-title">Inherent Risk Rating — computed</div>
+      <div class="rp-grid three">
+        <div class="rp-field"><label>Likelihood</label><div class="rp-computed">${r.inherentLikelihood||'—'}</div></div>
+        <div class="rp-field"><label>Consequence</label><div class="rp-computed">${r.inherentConsequence||'—'}</div></div>
+        <div class="rp-field"><label>Score / Rating</label>
+          <div class="rp-computed" style="color:${col[r.inherentRating]||'var(--mid)'};font-weight:700">
+            ${r.inherentScore||'—'} · ${r.inherentRating||'—'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW FIELDS -->
+    <div class="rp-section">
+      <div class="rp-section-title">COO Review — complete these fields</div>
+
+      <div class="rp-grid" style="margin-bottom:14px">
+        <div class="rp-field">
+          <label>Status</label>
+          <select class="rp-select" id="rv-status">
+            ${['Pending Review','Open','In Progress','Monitor','Closed'].map(s =>
+              `<option ${r.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Action Owner (confirmed)</label>
+          <input class="rp-input" id="rv-owner" value="${r.actionOwner||r.suggestedActionOwner||''}">
+        </div>
+      </div>
+
+      <div class="rp-grid" style="margin-bottom:14px">
+        <div class="rp-field">
+          <label>Target Completion Date</label>
+          <input type="date" class="rp-input" id="rv-target" value="${r.targetCompletionDate||''}">
+        </div>
+        <div class="rp-field">
+          <label>Last Review Date</label>
+          <input type="date" class="rp-input" id="rv-lastReview" value="${r.lastReviewDate||''}">
+        </div>
+      </div>
+
+      <div class="rp-grid three" style="margin-bottom:8px">
+        <div class="rp-field">
+          <label>Residual Likelihood</label>
+          <select class="rp-select" id="rv-resLikelihood" onchange="updateResidualScore()">
+            <option value="">— select —</option>
+            ${['1 - Rare','2 - Unlikely','3 - Possible','4 - Likely','5 - Almost Certain'].map(o =>
+              `<option ${r.residualLikelihood===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Residual Consequence</label>
+          <select class="rp-select" id="rv-resConsequence" onchange="updateResidualScore()">
+            <option value="">— select —</option>
+            ${['1 - Insignificant','2 - Minor','3 - Moderate','4 - Major','5 - Catastrophic'].map(o =>
+              `<option ${r.residualConsequence===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Residual Score / Rating</label>
+          <div class="rp-computed" id="rv-residual-display" style="font-weight:700;color:${col[r.residualRating]||'var(--mid)'}">
+            ${r.residualScore ? r.residualScore + ' · ' + r.residualRating : '— not yet assessed'}
+          </div>
+        </div>
+      </div>
+
+      <div class="rp-grid three" style="margin-bottom:14px">
+        <div class="rp-field">
+          <label>Risk Trend</label>
+          <select class="rp-select" id="rv-trend">
+            ${['Not Yet Assessed','Increasing','Stable','Decreasing'].map(o =>
+              `<option ${(r.riskTrend||'Not Yet Assessed')===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Root Cause Category</label>
+          <select class="rp-select" id="rv-rootCause">
+            <option value="">— select —</option>
+            ${['Human Error','Staffing Issue','System/Process Failure','Training Gap','Policy Gap',
+               'Equipment Failure','Communication Breakdown','External Factor'].map(o =>
+              `<option ${r.rootCauseCategory===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Clinical Area</label>
+          <select class="rp-select" id="rv-clinicalArea">
+            <option value="">— select —</option>
+            ${['ER','ICU','Surgery','Maternity','Pharmacy','Laboratory','Radiology','General Ward','Kitchen','N/A'].map(o =>
+              `<option ${r.clinicalArea===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="rp-grid" style="margin-bottom:14px">
+        <div class="rp-field">
+          <label>Regulatory Standard</label>
+          <select class="rp-select" id="rv-regulatory">
+            <option value="">— select —</option>
+            ${['None','DoH','OHSC','HPCSA','SANC','NHA Section 90','POPI Act','OHS Act','Patient Rights','SAHPRA'].map(o =>
+              `<option ${r.regulatoryStandard===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="rp-field">
+          <label>Review Notes</label>
+          <textarea class="rp-textarea" id="rv-notes" rows="2">${r.reviewNotes||''}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT TRAIL -->
+    <div class="rp-section" id="audit-section">
+      <div class="rp-section-title">Audit Trail</div>
+      <div class="loading" id="audit-loading"><div class="spinner"></div></div>
+      <ul class="audit-list" id="audit-list" style="display:none"></ul>
+    </div>`;
+
+  loadAudit(r.riskId);
+  updateResidualScore();
+  document.getElementById('overlay').classList.add('show');
+};
+
+// ── RESIDUAL SCORE (live update) ──────────────────────────────────────────
+window.updateResidualScore = function() {
+  const l = parseLevel(document.getElementById('rv-resLikelihood')?.value);
+  const c = parseLevel(document.getElementById('rv-resConsequence')?.value);
+  const display = document.getElementById('rv-residual-display');
+  if (!display) return;
+  if (!l || !c) { display.textContent = '— not yet assessed'; display.style.color = 'var(--mid)'; return; }
+  const { score, rating } = rateRisk(l, c);
+  const col = { Extreme:'#7f1d1d', High:'#c2410c', Moderate:'#b45309', Low:'#15803d' };
+  display.textContent = `${score} · ${rating} · ${withinAppetite(rating)==='Yes'?'Within appetite':'EXCEEDING'}`;
+  display.style.color = col[rating] || 'var(--mid)';
+};
+
+// ── LOAD AUDIT ────────────────────────────────────────────────────────────
+async function loadAudit(riskId) {
+  try {
+    const snap = await getDocs(collection(db, 'risks', riskId, 'audit'));
+    const events = snap.docs.map(d => d.data())
+      .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    const list = document.getElementById('audit-list');
+    document.getElementById('audit-loading').style.display = 'none';
+    list.style.display = 'block';
+
+    if (!events.length) {
+      list.innerHTML = '<li style="padding:10px 0;font-size:13px;color:var(--mid)">No audit events yet.</li>';
+      return;
+    }
+
+    list.innerHTML = events.map(e => `
+      <li class="audit-item">
+        <div class="audit-dot"></div>
+        <div class="audit-content">
+          <div class="audit-note">${e.note||e.eventType||'—'}</div>
+          <div class="audit-meta">${e.byName||e.by||'—'} · ${e.timestamp ? new Date(e.timestamp).toLocaleString('en-ZA') : '—'}</div>
+        </div>
+      </li>`).join('');
+  } catch(e) {
+    document.getElementById('audit-loading').innerHTML = `<p style="color:var(--mid);font-size:13px">Could not load audit trail.</p>`;
+  }
+}
+
+// ── SAVE REVIEW ───────────────────────────────────────────────────────────
+window.saveReview = async function() {
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const l = parseLevel(document.getElementById('rv-resLikelihood').value);
+  const c = parseLevel(document.getElementById('rv-resConsequence').value);
+  const { score: resScore, rating: resRating } = l && c ? rateRisk(l, c) : { score:'', rating:'' };
+  const appetite   = resRating ? withinAppetite(resRating) : '';
+  const frequency  = resRating ? FREQ[resRating] : (currentRisk.reviewFrequency||'');
+  const newStatus  = document.getElementById('rv-status').value;
+
+  const updates = {
+    status:              newStatus,
+    actionOwner:         document.getElementById('rv-owner').value,
+    targetCompletionDate: document.getElementById('rv-target').value,
+    lastReviewDate:      document.getElementById('rv-lastReview').value,
+    residualLikelihood:  document.getElementById('rv-resLikelihood').value,
+    residualConsequence: document.getElementById('rv-resConsequence').value,
+    residualScore:       resScore,
+    residualRating:      resRating,
+    withinAppetite:      appetite,
+    reviewFrequency:     frequency,
+    riskTrend:           document.getElementById('rv-trend').value,
+    rootCauseCategory:   document.getElementById('rv-rootCause').value,
+    clinicalArea:        document.getElementById('rv-clinicalArea').value,
+    regulatoryStandard:  document.getElementById('rv-regulatory').value,
+    reviewNotes:         document.getElementById('rv-notes').value,
+    lastReviewedBy:      currentUser.email,
+    lastReviewedAt:      new Date().toISOString(),
+  };
+
+  try {
+    await updateDoc(doc(db, 'risks', currentRisk.riskId), updates);
+
+    // Audit event
+    const prevStatus = currentRisk.status;
+    const auditNote = prevStatus !== newStatus
+      ? `Status changed from "${prevStatus}" to "${newStatus}".${resRating ? ` Residual rating: ${resRating} (score ${resScore}). ${appetite==='No'?'⚠ EXCEEDING TOLERANCE.':'Within appetite.'}` : ''}`
+      : `Review updated by COO.${resRating ? ` Residual: ${resRating} (${resScore}).` : ''}`;
+
+    await addDoc(collection(db, 'risks', currentRisk.riskId, 'audit'), {
+      eventType: 'REVIEWED',
+      timestamp: new Date().toISOString(),
+      by:        currentUser.email,
+      byName:    currentUser.displayName || currentUser.email,
+      note:      auditNote,
+    });
+
+    // Update local cache
+    const idx = allRisks.findIndex(r => r.riskId === currentRisk.riskId);
+    if (idx >= 0) allRisks[idx] = { ...allRisks[idx], ...updates };
+
+    showToast('Review saved', 'success');
+    updateStats();
+    updateCounts();
+    applyFilters();
+    setTimeout(closePanel, 600);
+
+  } catch(e) {
+    showToast('Save failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save review';
+  }
+};
+
+window.closePanel = function() {
+  document.getElementById('overlay').classList.remove('show');
+  currentRisk = null;
+};
+
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target.id === 'overlay') closePanel();
+});
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HAE Risk — Report a Risk</title>
+<style>
+:root {
+  --navy:#1F3A5F;--navy-d:#162c4a;--gold:#C8A24B;--ink:#1a1c22;--mid:#6b7280;
+  --rule:#e2e0da;--paper:#f7f6f3;--white:#ffffff;
+  --green:#3B6D11;--green-b:#EAF3DE;--amber:#BA7517;--amber-b:#FAEEDA;
+  --red:#A32D2D;--red-b:#FCEBEB;--orange:#c2410c;--orange-b:#fff7ed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5;min-height:100vh;padding-bottom:100px}
+
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
+.auth-card{background:var(--white);border-radius:14px;padding:36px 28px;width:100%;max-width:360px;text-align:center}
+.auth-logo{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mid);margin-bottom:4px}
+.auth-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--mid);margin-bottom:28px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 16px;background:var(--white);border:1.5px solid var(--rule);border-radius:8px;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;margin-bottom:10px}
+.auth-divider{font-size:11px;color:var(--mid);margin:8px 0}
+.auth-field{width:100%;padding:12px 14px;border:1.5px solid var(--rule);border-radius:8px;font-size:14px;color:var(--ink);background:var(--white);margin-bottom:10px;outline:none}
+.auth-field:focus{border-color:var(--navy)}
+.btn-primary{width:100%;padding:13px;background:var(--navy);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.auth-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+
+/* HEADER */
+#form-screen{display:none}
+.header{background:var(--navy);padding:16px 20px 14px;position:sticky;top:0;z-index:20}
+.header-brand{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.header-title{font-size:17px;font-weight:700;color:var(--white)}
+.header-meta{font-size:12px;color:#9FB3CC;margin-top:2px}
+
+/* USER BAR */
+.user-bar{background:var(--white);border-bottom:1px solid var(--rule);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.user-info{font-size:12px;color:var(--mid)}
+.user-info strong{color:var(--ink)}
+.btn-signout{font-size:11px;color:var(--mid);background:none;border:1px solid var(--rule);border-radius:4px;padding:3px 8px;cursor:pointer}
+
+/* RATING PREVIEW BAND */
+.rating-band{margin:0 20px 0;border-radius:8px;padding:12px 16px;display:none;align-items:center;gap:14px}
+.rating-band.show{display:flex}
+.rating-band .r-score{font-size:28px;font-weight:700;line-height:1}
+.rating-band .r-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}
+.rating-band .r-name{font-size:16px;font-weight:700}
+.rating-band .r-note{font-size:12px;margin-top:2px;opacity:0.8}
+
+/* FORM */
+.form-body{padding:16px 20px;max-width:640px;margin:0 auto}
+
+.form-section{background:var(--white);border:1px solid var(--rule);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.form-section-head{background:var(--navy);padding:11px 16px;font-size:13px;font-weight:700;color:var(--white);letter-spacing:0.02em}
+.form-section-body{padding:16px}
+
+.field-group{margin-bottom:16px}
+.field-group:last-child{margin-bottom:0}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--mid);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px}
+.field-required{color:var(--red)}
+.field-help{font-size:12px;color:var(--mid);margin-top:4px;line-height:1.4;font-style:italic}
+
+.field-select, .field-input, .field-textarea, .field-date {
+  width:100%;padding:11px 14px;border:1.5px solid var(--rule);border-radius:8px;
+  font-size:14px;color:var(--ink);background:var(--white);outline:none;
+  font-family:inherit;transition:border-color 0.15s;
+}
+.field-select:focus, .field-input:focus, .field-textarea:focus, .field-date:focus{border-color:var(--navy)}
+.field-textarea{resize:vertical;min-height:80px;line-height:1.5}
+
+/* SCORE PREVIEW inline */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.score-preview{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;text-align:center;margin-top:12px}
+.score-preview .sp-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);margin-bottom:4px}
+.score-preview .sp-value{font-size:22px;font-weight:700;color:var(--navy)}
+.score-preview .sp-rating{font-size:12px;font-weight:600;margin-top:2px}
+
+/* SUBMIT BAR */
+.submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--rule);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 16px rgba(0,0,0,0.08);z-index:20}
+.submit-status{font-size:12px;color:var(--mid)}
+.btn-submit{padding:12px 28px;background:var(--navy);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s}
+.btn-submit:hover{background:var(--navy-d)}
+.btn-submit:disabled{background:var(--mid);cursor:not-allowed}
+
+/* SUCCESS SCREEN */
+#success-screen{display:none;min-height:100vh;background:var(--navy);align-items:center;justify-content:center;padding:24px}
+.success-card{background:var(--white);border-radius:14px;padding:44px 36px;width:100%;max-width:380px;text-align:center}
+.success-icon{font-size:48px;margin-bottom:16px}
+.success-id{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.success-msg{font-size:14px;color:var(--mid);line-height:1.6;margin-bottom:24px}
+.success-rating{display:inline-block;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:20px}
+.btn-another{width:100%;padding:13px;background:var(--navy);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all 0.25s;pointer-events:none;z-index:100;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--red)}
+
+@media(max-width:480px){.score-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Hospital at Ekhaya</div>
+    <div class="auth-title">Report a Risk</div>
+    <div class="auth-sub">Sign in to submit a risk or incident</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <div class="auth-divider">or</div>
+    <input class="auth-field" type="email" id="auth-email" placeholder="Email address">
+    <input class="auth-field" type="password" id="auth-password" placeholder="Password">
+    <button class="btn-primary" onclick="signInEmail()">Sign in</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="form-screen">
+  <div class="header">
+    <div class="header-brand">Hospital at Ekhaya</div>
+    <div class="header-title">Report a Risk or Incident</div>
+    <div class="header-meta">All fields marked * are required</div>
+  </div>
+
+  <div class="user-bar">
+    <div class="user-info">Submitting as <strong id="user-display">—</strong></div>
+    <button class="btn-signout" onclick="doSignOut()">Sign out</button>
+  </div>
+
+  <div class="form-body">
+
+    <!-- SECTION 1: IDENTIFICATION -->
+    <div class="form-section">
+      <div class="form-section-head">1 — Risk Identification</div>
+      <div class="form-section-body">
+
+        <div class="field-group">
+          <label class="field-label">Date Risk Identified <span class="field-required">*</span></label>
+          <input type="date" class="field-date" id="f-date">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Risk Area / Process <span class="field-required">*</span></label>
+          <select class="field-select" id="f-area">
+            <option value="">— select —</option>
+            <option>Clinical</option>
+            <option>Non-Clinical</option>
+            <option>Operational</option>
+            <option>Infrastructure</option>
+            <option>Facilities</option>
+            <option>Patient Falls</option>
+            <option>Medication Error</option>
+            <option>ER</option>
+            <option>Pharmacy</option>
+            <option>Kitchen</option>
+            <option>Legal</option>
+            <option>Regulatory</option>
+            <option>Compliance</option>
+            <option>Admin/Finance</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Register Category <span class="field-required">*</span></label>
+          <select class="field-select" id="f-category">
+            <option value="">— select —</option>
+            <optgroup label="Clinical">
+              <option>Clinical - Medication Management</option>
+              <option>Clinical - Infection Control</option>
+              <option>Clinical - Patient Falls</option>
+              <option>Clinical - Surgical/Procedural</option>
+              <option>Clinical - Maternal &amp; Child Health</option>
+              <option>Clinical - Diagnostics</option>
+              <option>Clinical - Kitchen/Food Safety</option>
+              <option>Clinical - General Care</option>
+            </optgroup>
+            <optgroup label="Patient Safety &amp; Incidents">
+              <option>Patient Safety</option>
+              <option>Incident</option>
+              <option>Adverse Event</option>
+            </optgroup>
+            <optgroup label="Operational">
+              <option>Operational - HR/Staffing</option>
+              <option>Operational - Equipment Management</option>
+              <option>Operational - Supply Chain/Procurement</option>
+              <option>Operational - Workflow/Process</option>
+            </optgroup>
+            <optgroup label="Infrastructure">
+              <option>Infrastructure - Building/Facilities</option>
+              <option>Infrastructure - IT/Technology</option>
+              <option>Infrastructure - Medical Equipment</option>
+              <option>Infrastructure - Utilities (Power/Water/Gas)</option>
+              <option>Facilities</option>
+            </optgroup>
+            <optgroup label="Financial &amp; Reputational">
+              <option>Financial - Budget/Revenue</option>
+              <option>Financial - Insurance/Billing</option>
+              <option>Reputational - Media/Public Relations</option>
+              <option>Reputational - Patient Complaints</option>
+            </optgroup>
+            <optgroup label="Legal &amp; Compliance">
+              <option>Legal - Litigation Risk</option>
+              <option>Legal - Contractual</option>
+              <option>Compliance - Regulatory Inspection</option>
+              <option>Compliance - OHSC</option>
+              <option>Compliance - HPCSA</option>
+              <option>Compliance - Documentation</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Description of Risk / Incident <span class="field-required">*</span></label>
+          <textarea class="field-textarea" id="f-description" placeholder="Describe the risk or incident clearly and factually. Include what happened or could happen, where, and who is affected." rows="4"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Patient Harm Level <span class="field-required">*</span></label>
+          <select class="field-select" id="f-harm">
+            <option value="">— select —</option>
+            <option>None</option>
+            <option>Near Miss</option>
+            <option>Minor</option>
+            <option>Moderate</option>
+            <option>Severe</option>
+            <option>Death</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SECTION 2: RATING -->
+    <div class="form-section">
+      <div class="form-section-head">2 — Risk Rating (Inherent)</div>
+      <div class="form-section-body">
+
+        <div class="score-grid">
+          <div class="field-group">
+            <label class="field-label">Likelihood <span class="field-required">*</span></label>
+            <select class="field-select" id="f-likelihood" onchange="updateScore()">
+              <option value="">— select —</option>
+              <option value="1">1 - Rare</option>
+              <option value="2">2 - Unlikely</option>
+              <option value="3">3 - Possible</option>
+              <option value="4">4 - Likely</option>
+              <option value="5">5 - Almost Certain</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Consequence <span class="field-required">*</span></label>
+            <select class="field-select" id="f-consequence" onchange="updateScore()">
+              <option value="">— select —</option>
+              <option value="1">1 - Insignificant</option>
+              <option value="2">2 - Minor</option>
+              <option value="3">3 - Moderate</option>
+              <option value="4">4 - Major</option>
+              <option value="5">5 - Catastrophic</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="score-preview" style="display:none">
+          <div class="score-preview">
+            <div class="sp-label">Inherent Score &amp; Rating</div>
+            <div class="sp-value" id="sp-score">—</div>
+            <div class="sp-rating" id="sp-rating">—</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SECTION 3: CONTROLS -->
+    <div class="form-section">
+      <div class="form-section-head">3 — Controls &amp; Recommended Action</div>
+      <div class="form-section-body">
+
+        <div class="field-group">
+          <label class="field-label">Current Controls in Place</label>
+          <textarea class="field-textarea" id="f-controls" placeholder="What is already in place or has already been done to manage this risk?" rows="3"></textarea>
+          <div class="field-help">Controls = what is already in place or has already been done.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Recommended Mitigation / Action</label>
+          <textarea class="field-textarea" id="f-mitigation" placeholder="What should still be done to reduce this risk further?" rows="3"></textarea>
+          <div class="field-help">Mitigation = what should still be done to reduce this risk further.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Suggested Action Owner</label>
+          <input type="text" class="field-input" id="f-owner" placeholder="Name or department responsible for the action">
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- end form-body -->
+
+  <div class="submit-bar">
+    <div class="submit-status" id="submit-status">Complete all required fields to submit</div>
+    <button class="btn-submit" id="btn-submit" onclick="submitRisk()">Submit risk</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="success-screen">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-id" id="success-id">QMS-001</div>
+    <div id="success-rating-badge" class="success-rating"></div>
+    <div class="success-msg">Your risk has been logged and is pending COO review. You will be notified if escalation is required.</div>
+    <button class="btn-another" onclick="resetForm()">Report another risk</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, collection, runTransaction, addDoc, Timestamp, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider,
+         signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBla6UBluNcWVKPSU8U30IuTSubLb7R2Kc",
+  authDomain:"hae-vuma-92fca.firebaseapp.com",
+  projectId:"hae-vuma-92fca",
+  storageBucket:"hae-vuma-92fca.firebasestorage.app",
+  messagingSenderId:"1052424261313",
+  appId:"1:1052424261313:web:a4bebe68d6f9ba14fa0e40"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('form-screen').style.display = 'block';
+    document.getElementById('user-display').textContent = user.displayName || user.email;
+    setDefaultDate();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('form-screen').style.display = 'none';
+  }
+});
+
+window.signInGoogle = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e) { showAuthError('Sign in failed. Try again.'); }
+};
+window.signInEmail = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-password').value;
+  if (!email || !pass) { showAuthError('Enter your email and password.'); return; }
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { showAuthError('Invalid email or password.'); }
+};
+window.doSignOut = () => signOut(auth);
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── RATING ENGINE (port verbatim from handoff doc) ────────────────────────
+function parseLevel(v) {
+  if (!v) return null;
+  const n = parseInt(String(v).trim().charAt(0), 10);
+  return (n >= 1 && n <= 5) ? n : null;
+}
+
+function rateRisk(likelihood, consequence) {
+  if (!likelihood || !consequence) return { score: '', rating: '' };
+  const score = likelihood * consequence;
+  let rating;
+  if (score >= 15)     rating = 'Extreme';
+  else if (score >= 8) rating = 'High';
+  else if (score >= 4) rating = 'Moderate';
+  else                 rating = 'Low';
+  // Catastrophic floor rule — minimum High if consequence = 5
+  if (consequence === 5 && rating !== 'Extreme') rating = 'High';
+  return { score, rating };
+}
+
+const RATING_COLOURS = {
+  Extreme: { bg:'#7f1d1d', text:'#ffffff', light:'#fef2f2' },
+  High:    { bg:'#c2410c', text:'#ffffff', light:'#fff7ed' },
+  Moderate:{ bg:'#b45309', text:'#ffffff', light:'#fffbeb' },
+  Low:     { bg:'#15803d', text:'#ffffff', light:'#f0fdf4' },
+};
+
+const FREQUENCY_MAP = { Extreme:'Weekly', High:'Bi-weekly', Moderate:'Monthly', Low:'Quarterly' };
+
+// ── LIVE SCORE PREVIEW ────────────────────────────────────────────────────
+window.updateScore = function() {
+  const l = parseLevel(document.getElementById('f-likelihood').value);
+  const c = parseLevel(document.getElementById('f-consequence').value);
+  const preview = document.getElementById('score-preview');
+  if (!l || !c) { preview.style.display = 'none'; return; }
+  const { score, rating } = rateRisk(l, c);
+  const col = RATING_COLOURS[rating];
+  preview.style.display = 'block';
+  document.getElementById('sp-score').textContent = score;
+  document.getElementById('sp-score').style.color = col.bg;
+  document.getElementById('sp-rating').textContent = rating + ' — review ' + FREQUENCY_MAP[rating];
+  document.getElementById('sp-rating').style.color = col.bg;
+  document.querySelector('.score-preview').style.borderColor = col.bg;
+};
+
+function setDefaultDate() {
+  const today = new Date();
+  document.getElementById('f-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────
+window.submitRisk = async function() {
+  // Validate required fields
+  const required = [
+    { id:'f-date',        label:'Date Risk Identified' },
+    { id:'f-area',        label:'Risk Area / Process'  },
+    { id:'f-category',    label:'Register Category'    },
+    { id:'f-description', label:'Description'          },
+    { id:'f-harm',        label:'Patient Harm Level'   },
+    { id:'f-likelihood',  label:'Likelihood'           },
+    { id:'f-consequence', label:'Consequence'          },
+  ];
+
+  for (const f of required) {
+    if (!document.getElementById(f.id).value) {
+      showToast(`${f.label} is required`, 'error');
+      document.getElementById(f.id).focus();
+      return;
+    }
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  const l = parseLevel(document.getElementById('f-likelihood').value);
+  const c = parseLevel(document.getElementById('f-consequence').value);
+  const { score, rating } = rateRisk(l, c);
+
+  try {
+    // Transactional Risk ID allocation
+    const counterRef = doc(db, 'counters', 'risk');
+    let riskId;
+
+    await runTransaction(db, async tx => {
+      const counterSnap = await tx.get(counterRef);
+      const current = counterSnap.exists() ? (counterSnap.data().current || 0) : 0;
+      const next = current + 1;
+      tx.set(counterRef, { current: next, updatedAt: new Date().toISOString() });
+      riskId = 'QMS-' + String(next).padStart(3, '0');
+    });
+
+    const dateVal = document.getElementById('f-date').value;
+
+    const riskDoc = {
+      // Identity
+      riskId,
+      status: 'Pending Review',
+
+      // Submission fields [S]
+      dateIdentified:    dateVal,
+      submittedBy:       currentUser.email,
+      submittedByName:   currentUser.displayName || currentUser.email,
+      submittedAt:       new Date().toISOString(),
+      riskArea:          document.getElementById('f-area').value,
+      registerCategory:  document.getElementById('f-category').value,
+      description:       document.getElementById('f-description').value,
+      inherentLikelihood: document.getElementById('f-likelihood').value,
+      inherentConsequence: document.getElementById('f-consequence').value,
+      currentControls:   document.getElementById('f-controls').value,
+      recommendedMitigation: document.getElementById('f-mitigation').value,
+      suggestedActionOwner: document.getElementById('f-owner').value,
+      patientHarmLevel:  document.getElementById('f-harm').value,
+
+      // Computed fields [C] — inherent
+      inherentScore:  score,
+      inherentRating: rating,
+
+      // Review fields [R] — blank until COO reviews
+      actionOwner:         '',
+      targetCompletionDate: '',
+      residualLikelihood:  '',
+      residualConsequence: '',
+      residualScore:       '',
+      residualRating:      '',
+      withinAppetite:      '',
+      reviewFrequency:     FREQUENCY_MAP[rating], // fallback to inherent until residual assessed
+      lastReviewDate:      '',
+      riskTrend:           'Not Yet Assessed',
+      rootCauseCategory:   '',
+      clinicalArea:        '',
+      regulatoryStandard:  '',
+      reviewNotes:         '',
+    };
+
+    // Write risk document with riskId as document ID
+    await setDoc(doc(db, 'risks', riskId), riskDoc);
+
+    // Write initial audit event
+    await addDoc(collection(db, 'risks', riskId, 'audit'), {
+      eventType:  'SUBMITTED',
+      timestamp:  new Date().toISOString(),
+      by:         currentUser.email,
+      byName:     currentUser.displayName || currentUser.email,
+      note:       `Risk submitted. Inherent rating: ${rating} (score ${score}).`,
+    });
+
+    // Show success screen
+    document.getElementById('form-screen').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'flex';
+    document.getElementById('success-id').textContent = riskId;
+
+    const col = RATING_COLOURS[rating];
+    const badge = document.getElementById('success-rating-badge');
+    badge.textContent = `${rating} Risk · Score ${score}`;
+    badge.style.background = col.light;
+    badge.style.color = col.bg;
+    badge.style.border = `1px solid ${col.bg}`;
+
+    // Alert COO if High or Extreme
+    if (rating === 'High' || rating === 'Extreme') {
+      // Cloud Function handles the WhatsApp notification
+      // Log alert in audit trail
+      await addDoc(collection(db, 'risks', riskId, 'audit'), {
+        eventType: 'ALERT_TRIGGERED',
+        timestamp: new Date().toISOString(),
+        by:        'system',
+        note:      `${rating} risk alert triggered — COO notification sent.`,
+      });
+    }
+
+  } catch(e) {
+    showToast('Submit failed: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Submit risk';
+  }
+};
+
+window.resetForm = function() {
+  document.getElementById('success-screen').style.display = 'none';
+  document.getElementById('form-screen').style.display = 'block';
+  ['f-date','f-area','f-category','f-description','f-harm',
+   'f-likelihood','f-consequence','f-controls','f-mitigation','f-owner']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el.tagName === 'SELECT') el.selectedIndex = 0;
+      else el.value = '';
+    });
+  document.getElementById('score-preview').style.display = 'none';
+  setDefaultDate();
+};
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+</script>
+</body>
+</html>
