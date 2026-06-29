@@ -297,7 +297,7 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-const COO_EMAILS = ['shakabornman@gmail.com', 'phentela@vumads.co.za'];
+// COO access verified via Firebase — no emails in code
 
 let currentUser = null;
 let allRisks    = [];
@@ -342,7 +342,16 @@ function isOverdue(risk) {
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
-    if (COO_EMAILS.includes(user.email)) {
+    // Check COO role via Firebase employee record
+    const { getDocs: gd, collection: col, query: q, where: w } = 
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const empSnap = await gd(q(col(db, 'employees'), w('email', '==', user.email)));
+    const empData = empSnap.empty ? null : empSnap.docs[0].data();
+    const isCOO = empData?.role === 'COO' || 
+                  empData?.position?.toUpperCase().includes('COO') ||
+                  empData?.position?.toUpperCase().includes('CHIEF OPERATIONS');
+
+    if (isCOO) {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('access-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
