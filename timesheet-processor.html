@@ -403,33 +403,15 @@ let verifyRows     = [];   // merged with SIMPLEPAY_EMPLOYEES
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
-    // Check access via Firebase employee record
-    const empSnap = await getDocs(query(collection(db, 'employees'),
-      where('email', '==', user.email)));
-    const empData = empSnap.empty ? null : empSnap.docs[0].data();
-    const isCOO = empData?.role === 'COO' ||
-                  empData?.position?.toUpperCase().includes('COO') ||
-                  empData?.position?.toUpperCase().includes('CHIEF OPERATIONS');
-    const hasAccess = !empSnap.empty;
-
-    if (hasAccess) {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('user-badge').textContent = user.displayName || user.email;
-    // Load hourly employees from Firebase — never from hardcoded data
     try {
       await loadHourlyEmployees();
-      console.log(`Loaded ${SIMPLEPAY_EMPLOYEES.length} hourly employees from Firebase`);
     } catch(e) {
       console.error('Failed to load employees:', e);
-      showToast('Could not load employee list from Firebase', 'error');
     }
     initPeriods();
-    } else {
-      // Authenticated but not authorised
-      await signOut(auth);
-      showAuthError('Access not authorised. Contact the COO.');
-    }
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
