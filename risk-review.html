@@ -342,25 +342,11 @@ function isOverdue(risk) {
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
-    // Check COO role via Firebase employee record
-    const { getDocs: gd, collection: col, query: q, where: w } = 
-      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const empSnap = await gd(q(col(db, 'employees'), w('email', '==', user.email)));
-    const empData = empSnap.empty ? null : empSnap.docs[0].data();
-    const isCOO = empData?.role === 'COO' || 
-                  empData?.position?.toUpperCase().includes('COO') ||
-                  empData?.position?.toUpperCase().includes('CHIEF OPERATIONS');
-
-    if (isCOO) {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('access-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      document.getElementById('user-badge').textContent = user.displayName || user.email;
-      await loadRisks();
-    } else {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('access-screen').style.display = 'flex';
-    }
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('access-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-badge').textContent = user.displayName || user.email;
+    await loadRisks();
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('access-screen').style.display = 'none';
