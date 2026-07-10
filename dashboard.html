@@ -119,7 +119,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#EEF1F4;color:#1b1b1b;pad
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, getDoc, getDocFromServer, getDocs, query, where, orderBy, limit }
+import { getFirestore, collection, doc, getDoc, getDocFromServer, getDocs, getDocsFromServer, query, where, orderBy, limit }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -196,7 +196,7 @@ async function initDashboard() {
   sel.innerHTML = '';
 
   // Load available weeks from hospitalWeeklySummary
-  const snap = await getDocs(collection(db, 'hospitalWeeklySummary'));
+  const snap = await getDocsFromServer(collection(db, 'hospitalWeeklySummary'));
   availableWeeks = snap.docs
     .map(d => d.id)
     .sort()
@@ -262,7 +262,7 @@ window.loadWeek = async function(weekEndingStr) {
 
   // Load dept detail from weeklyRollups
   let deptDetails = {};
-  const deptSnap = await getDocs(
+  const deptSnap = await getDocsFromServer(
     collection(db, 'weeklyRollups', weekEndingStr, 'departments')
   );
   deptSnap.docs.forEach(d => { deptDetails[d.id] = d.data(); });
@@ -293,12 +293,18 @@ function getPrevWeek(weekEndingStr) {
 }
 
 function getLast6Weeks(weekEndingStr) {
+  // Returns the 5 weeks before weekEndingStr PLUS weekEndingStr itself,
+  // so the currently viewed week is always the rightmost point on the
+  // trend chart. FIXED 2026-07-10 — previously returned only the 6 weeks
+  // BEFORE the viewed week, so the chart always stopped one week short
+  // and never plotted the week actually being looked at.
   const weeks = [];
   let cursor = getPrevWeek(weekEndingStr);
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 5; i++) {
     weeks.unshift(cursor);
     cursor = getPrevWeek(cursor);
   }
+  weeks.push(weekEndingStr);
   return weeks;
 }
 
@@ -356,6 +362,8 @@ function renderDashboard(summary, deptDetails, prevSummary, trendWeeks, trendDat
         naCount: d.naCount || 0,
         greenGatePassed: d.greenGatePassed !== false,
         sections: d.sections || [],
+        numberFigures: d.numberFigures || [],
+        dailyReadings: d.dailyReadings || [],
         ratingPrev: pre.rating || '',
         compliancePrev: pre.complianceLabel || '',
       };
@@ -505,6 +513,31 @@ function openPanel(ix) {
 
   if (d.topIssue && d.topIssue.trim()) {
     h += `<div class="seclbl">Notes</div><div style="font-size:12px;color:#555;line-height:1.6">${d.topIssue}</div>`;
+  }
+
+  // NEW 2026-07-10 — weekly totals for counted items (admissions, meals
+  // served, etc.) and per-day lists for point-in-time readings
+  // (electricity units, stock value) that don't sum meaningfully.
+  if (d.numberFigures && d.numberFigures.length) {
+    h += `<div class="seclbl">Weekly Totals</div>`;
+    for (const nf of d.numberFigures) {
+      h += `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid #f4f4f4;font-size:13px">
+          <span>${nf.label}</span>
+          <span style="font-weight:700;color:#1F3A5F">${nf.total}</span>
+        </div>`;
+    }
+  }
+
+  if (d.dailyReadings && d.dailyReadings.length) {
+    h += `<div class="seclbl">Daily Readings</div>`;
+    for (const dr of d.dailyReadings) {
+      const list = dr.readings.map(r => `${r.date}: ${r.value}`).join('  ·  ');
+      h += `
+        <div style="font-size:12px;color:#555;line-height:1.7;margin-bottom:8px">
+          <strong style="color:#1b1b1b">${dr.label}</strong><br>${list}
+        </div>`;
+    }
   }
 
   document.getElementById('pbody').innerHTML = h;
