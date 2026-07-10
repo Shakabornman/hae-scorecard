@@ -119,7 +119,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#EEF1F4;color:#1b1b1b;pad
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit }
+import { getFirestore, collection, doc, getDoc, getDocFromServer, getDocs, query, where, orderBy, limit }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -256,7 +256,7 @@ window.loadWeek = async function(weekEndingStr) {
   document.getElementById('live-badge').style.display = isLive ? 'inline' : 'none';
 
   // Load summary for selected week
-  const summaryDoc = await getDoc(doc(db, 'hospitalWeeklySummary', weekEndingStr));
+  const summaryDoc = await getDocFromServer(doc(db, 'hospitalWeeklySummary', weekEndingStr));
   let summary = null;
   if (summaryDoc.exists()) summary = summaryDoc.data();
 
@@ -270,7 +270,7 @@ window.loadWeek = async function(weekEndingStr) {
   // Load previous week's summary for trend arrows and drill-down
   const prevWeek = getPrevWeek(weekEndingStr);
   let prevSummary = null;
-  const prevDoc = await getDoc(doc(db, 'hospitalWeeklySummary', prevWeek));
+  const prevDoc = await getDocFromServer(doc(db, 'hospitalWeeklySummary', prevWeek));
   if (prevDoc.exists()) prevSummary = prevDoc.data();
 
   // Load 6-week trend data
@@ -305,8 +305,12 @@ function getLast6Weeks(weekEndingStr) {
 async function loadTrendData(weeks) {
   const results = {};
   await Promise.all(weeks.map(async wk => {
-    const d = await getDoc(doc(db, 'hospitalWeeklySummary', wk));
-    if (d.exists()) results[wk] = d.data();
+    try {
+      const d = await getDocFromServer(doc(db, 'hospitalWeeklySummary', wk));
+      if (d.exists()) results[wk] = d.data();
+    } catch (e) {
+      console.error('Trend fetch failed for', wk, e);
+    }
   }));
   return results;
 }
