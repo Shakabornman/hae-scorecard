@@ -138,10 +138,19 @@ const db   = getFirestore(app);
 const auth = getAuth(app);
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
+// FIXED 2026-07-10: onAuthStateChanged can fire more than once in quick
+// succession (e.g. once on stale cached state, again once the popup token
+// settles). Each firing called initDashboard(), which rebuilds the week
+// dropdown — two overlapping calls interleaved their writes into the same
+// <select>, producing a duplicate "3-9 Jul" entry (one populated, one blank).
+// This guard ensures initDashboard() only ever runs once per page load.
+let dashboardInitialized = false;
 onAuthStateChanged(auth, async user => {
   if (!user) {
     await signInWithPopup(auth, new GoogleAuthProvider());
   } else {
+    if (dashboardInitialized) return;
+    dashboardInitialized = true;
     await initDashboard();
   }
 });
@@ -181,6 +190,11 @@ let currentDepts   = [];
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function initDashboard() {
+  // Populate week selector — cleared once, up front, before any async work,
+  // so a concurrent call has nothing stale left to interleave with.
+  const sel = document.getElementById('week-select');
+  sel.innerHTML = '';
+
   // Load available weeks from hospitalWeeklySummary
   const snap = await getDocs(collection(db, 'hospitalWeeklySummary'));
   availableWeeks = snap.docs
@@ -195,10 +209,6 @@ async function initDashboard() {
   const thu = new Date(now);
   thu.setDate(now.getDate() + daysToThu);
   const liveWeek = thu.toISOString().split('T')[0];
-
-  // Populate week selector
-  const sel = document.getElementById('week-select');
-  sel.innerHTML = '';
 
   // Always include live week first (even if no data yet)
   const liveLabel = weekLabel(liveWeek) + ' (current)';
