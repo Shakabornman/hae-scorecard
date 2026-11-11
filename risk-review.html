@@ -256,7 +256,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="view-tab" onclick="setView('pending')" id="tab-pending">Pending Review <span class="tab-count" id="cnt-pending">0</span></button>
     <button class="view-tab" onclick="setView('exceeding')" id="tab-exceeding">Exceeding Tolerance <span class="tab-count" id="cnt-exceeding">0</span></button>
     <button class="view-tab" onclick="setView('overdue')" id="tab-overdue">Overdue Actions <span class="tab-count" id="cnt-overdue">0</span></button>
-    <button class="view-tab" onclick="setView('clinical')" id="tab-clinical">Clinical <span class="tab-count" id="cnt-clinical">0</span></button>
+    <button class="view-tab" onclick="setView('clinical')" id="tab-clinical">Patient Safety <span class="tab-count" id="cnt-clinical">0</span></button>
+    <button class="view-tab" onclick="setView('hs')" id="tab-hs">Health and Safety <span class="tab-count" id="cnt-hs">0</span></button>
+    <button class="view-tab" onclick="setView('env')" id="tab-env">Environment and Facilities <span class="tab-count" id="cnt-env">0</span></button>
     <button class="view-tab" onclick="setView('operational')" id="tab-operational">Operational <span class="tab-count" id="cnt-operational">0</span></button>
     <button class="view-tab" onclick="setView('compliance')" id="tab-compliance">Compliance <span class="tab-count" id="cnt-compliance">0</span></button>
     <button class="view-tab" onclick="setView('closed')" id="tab-closed">Closed <span class="tab-count" id="cnt-closed">0</span></button>
@@ -439,11 +441,16 @@ function updateStats() {
 // ── CATEGORY GROUPS (every category belongs to exactly one group) ──────────
 function groupOf(r) {
   const c = r.registerCategory || '';
-  if (c.startsWith('Clinical') || c==='Patient Safety' || c==='Incident' || c==='Adverse Event') return 'Clinical';
-  if (c.startsWith('Operational') || c.startsWith('Infrastructure') || c==='Facilities') return 'Operational';
-  if (c.startsWith('Compliance') || c.startsWith('Legal') || c.startsWith('Financial') || c.startsWith('Reputational') || c==='Health and Safety') return 'Compliance';
+  if (c.startsWith('OHS') || c==='Health and Safety') return 'Health and Safety';
+  if (c.startsWith('Clinical') || c==='Patient Safety' || c==='Incident' || c==='Adverse Event') return 'Patient Safety';
+  if (c.startsWith('Infrastructure') || c.startsWith('Environmental') || c==='Facilities') return 'Environment and Facilities';
+  if (c.startsWith('Operational')) return 'Operational';
+  if (c.startsWith('Compliance') || c.startsWith('Legal') || c.startsWith('Financial') || c.startsWith('Reputational')) return 'Compliance';
   return 'Other';
 }
+const GROUP_VIEW = { 'Patient Safety':'clinical', 'Health and Safety':'hs', 'Environment and Facilities':'env', 'Operational':'operational', 'Compliance':'compliance' };
+// Health and Safety view = Health and Safety category group + any risk flagged as having H&S implications
+const inHS = r => groupOf(r)==='Health and Safety' || r.ohsImplications === true;
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 let dashScope = 'open';
@@ -478,7 +485,7 @@ function renderDashboard() {
   const byArea = {}; set.forEach(r => { const k = r.riskArea || 'Not set'; byArea[k] = (byArea[k]||0)+1; });
   const areaRows = Object.entries(byArea).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const byGroup = {}; set.forEach(r => { const k = groupOf(r); byGroup[k] = (byGroup[k]||0)+1; });
-  const groupRows = ['Clinical','Operational','Compliance','Other'].filter(k => byGroup[k]).map(k => [k, byGroup[k], dashScope==='open' && k!=='Other' ? k.toLowerCase() : null]);
+  const groupRows = ['Patient Safety','Health and Safety','Environment and Facilities','Operational','Compliance','Other'].filter(k => byGroup[k]).map(k => [k, byGroup[k], dashScope==='open' && GROUP_VIEW[k] ? GROUP_VIEW[k] : null]);
   const byStatus = {}; set.forEach(r => { byStatus[r.status||'—'] = (byStatus[r.status||'—']||0)+1; });
   const statusRows = Object.entries(byStatus).sort((a,b)=>b[1]-a[1]);
   const now = new Date(); const months = [];
@@ -520,7 +527,9 @@ function getViewRisks(view) {
     case 'pending':    return allRisks.filter(r => r.status==='Pending Review');
     case 'exceeding':  return allRisks.filter(r => r.withinAppetite==='No' && r.status!=='Closed');
     case 'overdue':    return allRisks.filter(isOverdue);
-    case 'clinical':   return allRisks.filter(r => r.status!=='Closed' && groupOf(r)==='Clinical');
+    case 'clinical':   return allRisks.filter(r => r.status!=='Closed' && groupOf(r)==='Patient Safety');
+    case 'hs':         return allRisks.filter(r => r.status!=='Closed' && inHS(r));
+    case 'env':        return allRisks.filter(r => r.status!=='Closed' && groupOf(r)==='Environment and Facilities');
     case 'operational':return allRisks.filter(r => r.status!=='Closed' && groupOf(r)==='Operational');
     case 'compliance': return allRisks.filter(r => r.status!=='Closed' && groupOf(r)==='Compliance');
     case 'closed':     return allRisks.filter(r => r.status==='Closed');
@@ -529,7 +538,7 @@ function getViewRisks(view) {
 }
 
 function updateCounts() {
-  const views = ['all','pending','exceeding','overdue','clinical','operational','compliance','closed'];
+  const views = ['all','pending','exceeding','overdue','clinical','hs','env','operational','compliance','closed'];
   views.forEach(v => {
     const el = document.getElementById('cnt-'+v);
     if (el) el.textContent = getViewRisks(v).length;

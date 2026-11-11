@@ -188,7 +188,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <label class="field-label">Register Category <span class="field-required">*</span></label>
           <select class="field-select" id="f-category">
             <option value="">— select —</option>
-            <optgroup label="Clinical">
+            <optgroup label="Patient Safety (risks to patients during care)">
               <option>Clinical - Medication Management</option>
               <option>Clinical - Infection Control</option>
               <option>Clinical - Patient Falls</option>
@@ -199,11 +199,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
               <option>Clinical - General Care</option>
               <option>Clinical - Emergency Care</option>
               <option>Clinical - Mental Health Care</option>
-            </optgroup>
-            <optgroup label="Patient Safety &amp; Incidents">
               <option>Patient Safety</option>
               <option>Incident</option>
               <option>Adverse Event</option>
+            </optgroup>
+            <optgroup label="Health and Safety (risks to employees, contractors and visitors in the workplace)">
+              <option>OHS - Injury and Hazards</option>
+              <option>OHS - Fire and Emergency</option>
+              <option>OHS - Hazardous Substances</option>
+              <option>OHS - Violence and Security of Staff</option>
+              <option>OHS - Training and Appointments</option>
+              <option>OHS - Inspections and Compliance</option>
+              <option>Health and Safety</option>
+            </optgroup>
+            <optgroup label="Environmental and Facilities (the physical environment; may also have OHS implications)">
+              <option>Infrastructure - Building/Facilities</option>
+              <option>Infrastructure - Utilities (Power/Water/Gas)</option>
+              <option>Infrastructure - Medical Equipment</option>
+              <option>Infrastructure - IT/Technology</option>
+              <option>Environmental - Waste Management</option>
+              <option>Environmental - Water, Air and Hygiene</option>
+              <option>Facilities</option>
             </optgroup>
             <optgroup label="Operational">
               <option>Operational - HR/Staffing</option>
@@ -212,14 +228,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
               <option>Operational - Workflow/Process</option>
               <option>Operational - Security</option>
               <option>Operational - Documentation</option>
-              <option>Health and Safety</option>
-            </optgroup>
-            <optgroup label="Infrastructure">
-              <option>Infrastructure - Building/Facilities</option>
-              <option>Infrastructure - IT/Technology</option>
-              <option>Infrastructure - Medical Equipment</option>
-              <option>Infrastructure - Utilities (Power/Water/Gas)</option>
-              <option>Facilities</option>
             </optgroup>
             <optgroup label="Financial &amp; Reputational">
               <option>Financial - Budget/Revenue</option>
@@ -237,6 +245,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
               <option>Legal - Information Management</option>
             </optgroup>
           </select>
+        </div>
+
+        <div class="field-group" id="ohs-flag-group" style="display:none">
+          <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer"><input type="checkbox" id="f-ohs" style="margin-top:3px"> <span>This also affects the safety of employees, contractors or visitors (Health and Safety implications)</span></label>
         </div>
 
         <div class="field-group">
@@ -507,6 +519,7 @@ window.submitRisk = async function() {
       submittedAt:       new Date().toISOString(),
       riskArea:          document.getElementById('f-area').value,
       registerCategory:  document.getElementById('f-category').value,
+      ohsImplications:   document.getElementById('f-ohs').checked,
       description:       document.getElementById('f-description').value,
       inherentLikelihood: document.getElementById('f-likelihood').value,
       inherentConsequence: document.getElementById('f-consequence').value,
@@ -597,6 +610,18 @@ function showToast(msg, type='') {
   t.textContent = msg; t.className = `toast ${type} show`;
   setTimeout(() => { t.className = 'toast'; }, 3000);
 }
+
+// Health and Safety flag: shown for categories that are not already Health and Safety
+function ohsCat(c){ return c.startsWith('OHS') || c==='Health and Safety'; }
+document.getElementById('f-category').addEventListener('change', function(){
+  const c=this.value, g=document.getElementById('ohs-flag-group');
+  g.style.display = (c && !ohsCat(c)) ? 'block' : 'none';
+  if (!c || ohsCat(c)) document.getElementById('f-ohs').checked = false;
+});
+document.getElementById('f-area').addEventListener('change', function(){
+  const cat=document.getElementById('f-category');
+  if (this.value==='OHS' && !cat.value){ cat.value='OHS - Injury and Hazards'; cat.dispatchEvent(new Event('change')); }
+});
 </script>
 </body>
 </html>
